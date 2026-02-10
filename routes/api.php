@@ -13,5 +13,6 @@ Route::prefix('mobile')->group(function () {
         Route::get('/nilai', [MobileSiswaController::class, 'nilai']);
         Route::get('/rekomendasi', [MobileSiswaController::class, 'rekomendasi']);
         Route::get('/rekomendasi/pdf', [MobileSiswaController::class, 'rekomendasiPdf']);
+        Route::get('/ping', fn() => response()->json(['ok' => true]));
     });
 });
