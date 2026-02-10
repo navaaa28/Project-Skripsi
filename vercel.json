@@ -12,7 +12,7 @@
     { "src": "/vendors/(.*)", "dest": "/public/vendors/$1", "headers": { "cache-control": "public, max-age=31536000" } },
     { "src": "/storage/images/(.*)", "dest": "/storage/app/public/images/$1", "headers": { "cache-control": "public, max-age=86400" } },
     { "src": "/storage/(.*)", "dest": "/storage/app/public/$1", "headers": { "cache-control": "public, max-age=86400" } },
-    { "src": "/(.*\\.(ico|png|jpg|jpeg|gif|svg|webp|txt|xml|woff|woff2|ttf|eot))", "dest": "/public/$1", "headers": { "cache-control": "public, max-age=31536000" } },
+    { "src": "/(.*.(ico|png|jpg|jpeg|gif|svg|webp|txt|xml|woff|woff2|ttf|eot))", "dest": "/public/$1", "headers": { "cache-control": "public, max-age=31536000" } },
 
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
