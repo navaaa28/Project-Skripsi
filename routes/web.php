@@ -10,6 +10,7 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MobileSiswaController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
@@ -40,15 +41,15 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::get('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'index'])->name('penilaian.index');
     Route::post('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'store'])->name('penilaian.store');
 });
-Route::prefix('mobile')->group(function () {
-    Route::post('/login', [MobileAuthController::class, 'login']);
-
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/logout', [MobileAuthController::class, 'logout']);
-        Route::get('/me', [MobileSiswaController::class, 'me']);
-        Route::get('/nilai', [MobileSiswaController::class, 'nilai']);
-        Route::get('/rekomendasi', [MobileSiswaController::class, 'rekomendasi']);
-        Route::get('/rekomendasi/pdf', [MobileSiswaController::class, 'rekomendasiPdf']);
-        Route::get('/ping', fn() => response()->json(['ok' => true]));
+Route::prefix('api/mobile')
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->group(function () {
+        Route::post('/login', [MobileAuthController::class, 'login']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/logout', [MobileAuthController::class, 'logout']);
+            Route::get('/me', [MobileSiswaController::class, 'me']);
+            Route::get('/nilai', [MobileSiswaController::class, 'nilai']);
+            Route::get('/rekomendasi', [MobileSiswaController::class, 'rekomendasi']);
+            Route::get('/rekomendasi/pdf', [MobileSiswaController::class, 'rekomendasiPdf']);
+        });
     });
-});
