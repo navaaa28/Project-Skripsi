@@ -11,14 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-        ]);
-    })
-    ->withMiddleware(function (Middleware $middleware) {
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->alias([
+        'role' => \App\Http\Middleware\RoleMiddleware::class,
+    ]);
+
+    // Tambahkan ini:
     $middleware->validateCsrfTokens(except: [
-        'api/*',
+        'api/mobile/*',
     ]);
 })
     ->withExceptions(function (Exceptions $exceptions): void {
