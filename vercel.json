@@ -5,29 +5,17 @@
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.php" },
-
-    { "src": "/build/(.*)", "dest": "/public/build/$1", "headers": { "cache-control": "public, max-age=31536000" } },
-    { "src": "/css/(.*)", "dest": "/public/css/$1", "headers": { "cache-control": "public, max-age=31536000" } },
-    { "src": "/js/(.*)", "dest": "/public/js/$1", "headers": { "cache-control": "public, max-age=31536000" } },
-    { "src": "/vendors/(.*)", "dest": "/public/vendors/$1", "headers": { "cache-control": "public, max-age=31536000" } },
-    { "src": "/storage/images/(.*)", "dest": "/storage/app/public/images/$1", "headers": { "cache-control": "public, max-age=86400" } },
-    { "src": "/storage/(.*)", "dest": "/storage/app/public/$1", "headers": { "cache-control": "public, max-age=86400" } },
-    { "src": "/(.*.(ico|png|jpg|jpeg|gif|svg|webp|txt|xml|woff|woff2|ttf|eot))", "dest": "/public/$1", "headers": { "cache-control": "public, max-age=31536000" } },
-
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "false",
     "APP_URL": "https://project-skripsi-ten.vercel.app",
-
-    "APP_CONFIG_CACHE": "",
-    "APP_EVENTS_CACHE": "",
-    "APP_PACKAGES_CACHE": "",
-    "APP_ROUTES_CACHE": "",
-    "APP_SERVICES_CACHE": "",
+    "APP_CONFIG_CACHE": "/tmp/config.php",
+    "APP_EVENTS_CACHE": "/tmp/events.php",
+    "APP_PACKAGES_CACHE": "/tmp/packages.php",
+    "APP_SERVICES_CACHE": "/tmp/services.php",
     "VIEW_COMPILED_PATH": "/tmp",
-
     "CACHE_DRIVER": "array",
     "LOG_CHANNEL": "stderr",
     "SESSION_DRIVER": "cookie"
