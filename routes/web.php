@@ -40,7 +40,7 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::get('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'index'])->name('penilaian.index');
     Route::post('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'store'])->name('penilaian.store');
 });
-Route::prefix('mobile')->group(function () {
+Route::prefix('api/mobile')->group(function () {
     Route::post('/login', [MobileAuthController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
