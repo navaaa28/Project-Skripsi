@@ -13,10 +13,10 @@
         --accent-2: #2563eb;
     }
     .login-shell {
-        min-height: calc(100vh - 64px);
+        min-height: 100dvh;
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
-        background: var(--bg);
+        background: linear-gradient(180deg, #f5f9ff 0%, #eef5ff 100%);
     }
     .hero {
         padding: 48px 40px;
@@ -82,11 +82,19 @@
     .float-line { height: 8px; background: #e5e7eb; border-radius: 999px; margin: 6px 0; }
     .float-dot { width: 12px; height: 12px; border-radius: 50%; background: #1e88e5; }
     .form-panel {
-        background: var(--panel);
-        padding: 56px 48px;
+        background: transparent;
+        padding: 40px 48px;
         display: flex;
-        flex-direction: column;
+        align-items: center;
         justify-content: center;
+    }
+    .form-card {
+        width: min(520px, 100%);
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+        padding: 34px 30px;
     }
     .brand {
         display: flex;
@@ -141,17 +149,11 @@
         color: #1e88e5;
         text-decoration: none;
     }
-    .footer {
-        position: absolute;
-        bottom: 12px;
-        left: 16px;
-        font-size: 11px;
-        color: var(--muted);
-    }
     @media (max-width: 980px) {
         .login-shell { grid-template-columns: 1fr; }
         .hero { display: none; }
-        .form-panel { padding: 36px 24px; }
+        .form-panel { padding: 24px 16px; }
+        .form-card { padding: 26px 20px; border-radius: 14px; }
     }
 </style>
 
@@ -187,26 +189,28 @@
     </section>
 
     <section class="form-panel">
-        <div class="brand">
-            <span style="display:inline-block;width:26px;height:26px;border-radius:6px;background:#e8f0ff;"></span>
-            SMART CICADAS
-        </div>
-        <div class="title">Log in</div>
-        <div class="subtitle">Sistem penilaian mendukung identifikasi minat dan bakat siswa</div>
+        <div class="form-card">
+            <div class="brand">
+                <img src="{{ asset('storage/icon.png') }}" alt="Logo" style="display:inline-block;width:26px;height:26px;border-radius:6px;object-fit:cover;">
+                SMART CICADAS
+            </div>
+            <div class="title">Log in</div>
+            <div class="subtitle">Sistem penilaian mendukung identifikasi minat dan bakat siswa</div>
 
-        <form method="POST" action="{{ route('login.attempt') }}">
-            @csrf
-            <div class="field">
-                <label class="label">Username</label>
-                <input type="text" name="username" value="{{ old('username') }}" class="input" placeholder="Masukkan username" required>
-            </div>
-            <div class="field">
-                <label class="label">Password</label>
-                <input type="password" name="password" class="input" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn">Masuk</button>
-        </form>
-        <a href="#" class="help">Perlu bantuan? Hubungi admin</a>
+            <form method="POST" action="{{ route('login.attempt') }}">
+                @csrf
+                <div class="field">
+                    <label class="label">Username</label>
+                    <input type="text" name="username" value="{{ old('username') }}" class="input" placeholder="Masukkan username" required>
+                </div>
+                <div class="field">
+                    <label class="label">Password</label>
+                    <input type="password" name="password" class="input" placeholder="********" required>
+                </div>
+                <button type="submit" class="btn">Masuk</button>
+            </form>
+            <a href="#" class="help">Perlu bantuan? Hubungi admin</a>
+        </div>
     </section>
 </div>
 @endsection

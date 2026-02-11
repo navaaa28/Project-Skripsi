@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Panel')</title>
+    <link rel="icon" type="image/png" href="{{ asset('storage/icon.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
@@ -40,7 +41,7 @@
                 </div>
             </nav>
         @endunless
-        <main class="max-w-7xl mx-auto px-4 py-6">
+        <main class="{{ request()->routeIs('login') ? 'w-full p-0 m-0' : 'max-w-7xl mx-auto px-4 py-6' }}">
             @if (session('status'))
                 <div class="mb-4 text-green-700">
                     {{ session('status') }}
@@ -60,3 +61,5 @@
     </div>
 </body>
 </html>
+
+
