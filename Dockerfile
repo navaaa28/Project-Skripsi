@@ -1,6 +1,24 @@
+# Stage 1: Build frontend assets with Node.js
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install npm dependencies
+RUN npm install
+
+# Copy all source files
+COPY . .
+
+# Build Vite assets
+RUN npm run build
+
+# Stage 2: PHP Runtime
 FROM php:8.3-cli
 
-# Install system dependencies including PostgreSQL
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -13,7 +31,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions with PostgreSQL support
+# Install PHP extensions
 RUN docker-php-ext-install \
     pdo_pgsql \
     pgsql \
@@ -30,10 +48,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy ALL files
+# Copy application files
 COPY . .
 
-# Install dependencies
+# Copy built Vite assets from frontend-build stage
+COPY --from=frontend-build /app/public/build /app/public/build
+
+# Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev --no-interaction --prefer-dist
 
 # Create storage directories and set permissions
@@ -48,4 +69,7 @@ RUN mkdir -p storage/framework/cache \
 EXPOSE 8080
 
 # Start server
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
