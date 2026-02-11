@@ -41,7 +41,7 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::post('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'store'])->name('penilaian.store');
 });
 
-Route::prefix('<api>mobile')->group(function () {
+Route::prefix('mobile')->group(function () {
     Route::post('/login', [MobileAuthController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
