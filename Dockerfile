@@ -28,10 +28,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy ALL files first
+# Copy ALL files
 COPY . .
 
-# Install dependencies (artisan sudah ada sekarang)
+# Install dependencies
 RUN composer install --optimize-autoloader --no-dev --no-interaction --prefer-dist
 
 # Create storage directories and set permissions
@@ -42,14 +42,6 @@ RUN mkdir -p storage/framework/cache \
     bootstrap/cache
 
 RUN chmod -R 775 storage bootstrap/cache
-
-# Generate application key
-RUN php artisan key:generate --force
-
-# Clear and cache config
-RUN php artisan config:clear
-RUN php artisan route:clear
-RUN php artisan view:clear
 
 # Expose port
 EXPOSE 8080
