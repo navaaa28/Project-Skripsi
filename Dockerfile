@@ -1,6 +1,6 @@
 FROM php:8.3-cli
 
-# Install system dependencies
+# Install system dependencies including PostgreSQL
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -8,13 +8,15 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libzip-dev \
+    libpq-dev \
     zip \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
+# Install PHP extensions with PostgreSQL support
 RUN docker-php-ext-install \
-    pdo_mysql \
+    pdo_pgsql \
+    pgsql \
     mbstring \
     exif \
     pcntl \
@@ -39,9 +41,8 @@ RUN mkdir -p storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
-    bootstrap/cache
-
-RUN chmod -R 775 storage bootstrap/cache
+    bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
 
 # Expose port
 EXPOSE 8080
