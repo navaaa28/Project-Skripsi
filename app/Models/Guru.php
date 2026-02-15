@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Guru extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $primaryKey = 'id_user';
     public $incrementing = false;
@@ -23,11 +24,11 @@ class Guru extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
+        return $this->belongsTo(User::class , 'id_user', 'id_user');
     }
 
     public function kelasWali()
     {
-        return $this->hasMany(Kelas::class, 'id_guru', 'id_user');
+        return $this->hasMany(Kelas::class , 'id_guru', 'id_user');
     }
 }

@@ -27,8 +27,8 @@ class AuthController extends Controller
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return back()->withErrors([
-                    'email' => 'Akun tidak memiliki akses.',
-                ])->onlyInput('email');
+                    'username' => 'Akun tidak memiliki akses.',
+                ])->onlyInput('username');
             }
 
             return $role === 'admin'

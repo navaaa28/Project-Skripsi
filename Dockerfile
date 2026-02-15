@@ -73,4 +73,6 @@ CMD php artisan config:clear && \
     php artisan route:clear && \
     php artisan view:clear && \
     php artisan storage:link && \
+    php artisan migrate --force && \
+    php artisan queue:work --tries=3 --timeout=90 --sleep=3 & \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
