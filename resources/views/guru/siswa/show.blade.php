@@ -59,7 +59,7 @@
                     <tr>
                         <td>{{ $n->semester }}</td>
                         <td>{{ $n->mapel?->nama_mapel ?? '-' }}</td>
-                        <td>{{ $n->nilai_akhir ?? '-' }}</td>
+                        <td>{{ $n->nilai_akhir !== null ? number_format($n->nilai_akhir, 1) : '-' }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -77,57 +77,114 @@
 </div>
 
 <div class="panel">
-    <div class="section-title">Hasil Analisis Minat & Bakat</div>
+    <div class="section-title" style="margin-bottom: 4px;">Hasil Analisis Minat & Bakat</div>
     @if (!$rekomendasi)
-        <div class="muted">Belum ada hasil analisis untuk siswa ini.</div>
+        <div class="muted">Belum ada hasil analisis. Isi semua nilai mata pelajaran terlebih dahulu.</div>
     @else
-        <div class="muted" style="margin-bottom:10px;">Semester: {{ $rekomendasi->semester }} · Tanggal: {{ $rekomendasi->tgl_analisis }}</div>
-        <div class="info-grid">
-            <div>
-                <div class="section-title">Minat (Top 3)</div>
+        <div class="muted" style="margin-bottom: 14px;">Semester {{ $rekomendasi->semester }} · {{ $rekomendasi->tgl_analisis }}</div>
+
+        <div class="hasil-grid">
+            {{-- Minat --}}
+            <div class="hasil-box">
+                <div class="hasil-label">Minat</div>
+                @if ($rekomendasi->minat_utama)
+                    <div class="hasil-value">{{ $rekomendasi->minat_utama }}</div>
+                @endif
                 @if (!empty($rekomendasi->minat_json))
-                    @foreach ($rekomendasi->minat_json as $item)
-                        <span class="pill">
-                            {{ $item['nama'] ?? '-' }}
-                            <span class="pct">{{ $item['persentase'] ?? '-' }}%</span>
-                        </span>
-                    @endforeach
-                @elseif ($rekomendasi->minat_utama)
-                    <span class="pill">{{ $rekomendasi->minat_utama }}</span>
-                @else
-                    <div class="muted">Tidak ada data.</div>
+                    <div class="bar-list">
+                        @foreach ($rekomendasi->minat_json as $item)
+                            <div class="bar-row">
+                                <span class="bar-name">{{ $item['nama'] ?? '-' }}</span>
+                                <div class="bar-track"><div class="bar-fill bar-blue" style="width: {{ $item['persentase'] ?? 0 }}%"></div></div>
+                                <span class="bar-num">{{ $item['persentase'] ?? 0 }}%</span>
+                            </div>
+                        @endforeach
+                    </div>
                 @endif
             </div>
-            <div>
-                <div class="section-title">Bakat (Top 3)</div>
+
+            {{-- Bakat --}}
+            <div class="hasil-box">
+                <div class="hasil-label">Bakat</div>
+                @if ($rekomendasi->bakat_potensial)
+                    <div class="hasil-value">{{ $rekomendasi->bakat_potensial }}</div>
+                @endif
                 @if (!empty($rekomendasi->bakat_json))
-                    @foreach ($rekomendasi->bakat_json as $item)
-                        <span class="pill">
-                            {{ $item['nama'] ?? '-' }}
-                            <span class="pct">{{ $item['persentase'] ?? '-' }}%</span>
-                        </span>
-                    @endforeach
-                @elseif ($rekomendasi->bakat_potensial)
-                    <span class="pill">{{ $rekomendasi->bakat_potensial }}</span>
-                @else
-                    <div class="muted">Tidak ada data.</div>
+                    <div class="bar-list">
+                        @foreach ($rekomendasi->bakat_json as $item)
+                            <div class="bar-row">
+                                <span class="bar-name">{{ $item['nama'] ?? '-' }}</span>
+                                <div class="bar-track"><div class="bar-fill bar-teal" style="width: {{ $item['persentase'] ?? 0 }}%"></div></div>
+                                <span class="bar-num">{{ $item['persentase'] ?? 0 }}%</span>
+                            </div>
+                        @endforeach
+                    </div>
                 @endif
             </div>
         </div>
-        <div style="margin-top:10px;">
-            <div class="section-title">Analisis Tren</div>
-            <div class="muted">{{ $rekomendasi->analisis_tren ?? '-' }}</div>
-        </div>
-        <div style="margin-top:10px;">
-            <div class="section-title">Ringkasan Non-Akademik</div>
-            <div class="muted">{{ $rekomendasi->ringkasan_non_akademik ?? '-' }}</div>
-        </div>
-        <div style="margin-top:10px;">
-            <div class="section-title">Saran Pengembangan</div>
-            <div class="muted">{{ $rekomendasi->saran_pengembangan ?? '-' }}</div>
-        </div>
+
+        {{-- Text sections --}}
+        @if ($rekomendasi->analisis_tren)
+            <div class="catatan-block">
+                <div class="catatan-title">Analisis Tren</div>
+                <ul class="catatan-list">
+                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->analisis_tren))) as $sentence)
+                        <li>{{ $sentence }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if ($rekomendasi->ringkasan_non_akademik)
+            <div class="catatan-block">
+                <div class="catatan-title">Ringkasan Non-Akademik</div>
+                <ul class="catatan-list">
+                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->ringkasan_non_akademik))) as $sentence)
+                        <li>{{ $sentence }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if ($rekomendasi->saran_pengembangan)
+            <div class="catatan-block">
+                <div class="catatan-title">Saran Pengembangan</div>
+                <ul class="catatan-list">
+                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->saran_pengembangan))) as $sentence)
+                        <li>{{ $sentence }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
     @endif
 </div>
+
+<style>
+    /* ---- Hasil Analisis ---- */
+    .hasil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .hasil-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; background: #fafafa; }
+    .hasil-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
+    .hasil-value { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+
+    .bar-list { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: flex; align-items: center; gap: 8px; }
+    .bar-name { font-size: 11px; color: #475569; width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-blue { background: #3b82f6; }
+    .bar-teal { background: #14b8a6; }
+    .bar-num { font-size: 11px; font-weight: 600; color: #374151; width: 32px; text-align: right; flex-shrink: 0; }
+
+    .catatan-block { border-top: 1px solid #f0f0f0; padding-top: 12px; margin-top: 12px; }
+    .catatan-title { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+    .catatan-list {
+        list-style: disc; margin: 0; padding-left: 18px;
+        display: flex; flex-direction: column; gap: 4px;
+    }
+    .catatan-list li { font-size: 12px; color: #475569; line-height: 1.55; }
+
+    @media (max-width: 720px) { .hasil-grid { grid-template-columns: 1fr; } }
+</style>
 
 @php
     $series = [];

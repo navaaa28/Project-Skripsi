@@ -131,6 +131,22 @@
         border-color: var(--accent-2);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
+    .input.input-error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    .error-text {
+        color: #ef4444; font-size: 11px; margin-top: 4px; display: none;
+    }
+    .error-text.show { display: block; }
+    .alert-error {
+        background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+        border-radius: 8px; padding: 10px 14px; font-size: 12px;
+        margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .alert-error .alert-dot {
+        width: 6px; height: 6px; border-radius: 50%; background: #ef4444; flex-shrink: 0;
+    }
     .btn {
         width: 100%;
         background: var(--accent);
@@ -142,13 +158,21 @@
         font-weight: 700;
         cursor: pointer;
         margin-top: 8px;
+        transition: opacity .2s;
     }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .help {
         margin-top: 12px;
         font-size: 12px;
         color: #1e88e5;
         text-decoration: none;
     }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-4px); }
+        40%, 80% { transform: translateX(4px); }
+    }
+    .shake { animation: shake .35s ease; }
     @media (max-width: 980px) {
         .login-shell { grid-template-columns: 1fr; }
         .hero { display: none; }
@@ -197,20 +221,72 @@
             <div class="title">Log in</div>
             <div class="subtitle">Sistem penilaian mendukung identifikasi minat dan bakat siswa</div>
 
-            <form method="POST" action="{{ route('login.attempt') }}">
+            @if ($errors->any())
+                <div class="alert-error">
+                    <span class="alert-dot"></span>
+                    <span>{{ $errors->first() }}</span>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login.attempt') }}" id="loginForm" novalidate>
                 @csrf
                 <div class="field">
                     <label class="label">Username</label>
-                    <input type="text" name="username" value="{{ old('username') }}" class="input" placeholder="Masukkan username" required>
+                    <input type="text" name="username" id="inputUsername" value="{{ old('username') }}" class="input @error('username') input-error @enderror" placeholder="Masukkan username">
+                    <div class="error-text" id="errUsername">Username wajib diisi.</div>
                 </div>
                 <div class="field">
                     <label class="label">Password</label>
-                    <input type="password" name="password" class="input" placeholder="********" required>
+                    <input type="password" name="password" id="inputPassword" class="input @error('password') input-error @enderror" placeholder="********">
+                    <div class="error-text" id="errPassword">Password wajib diisi.</div>
                 </div>
-                <button type="submit" class="btn">Masuk</button>
+                <button type="submit" class="btn" id="btnLogin">Masuk</button>
             </form>
             <a href="#" class="help">Perlu bantuan? Hubungi admin</a>
         </div>
     </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('loginForm');
+    const username = document.getElementById('inputUsername');
+    const password = document.getElementById('inputPassword');
+    const errUser = document.getElementById('errUsername');
+    const errPass = document.getElementById('errPassword');
+    const btn = document.getElementById('btnLogin');
+
+    function clearErr(input, errEl) {
+        input.addEventListener('input', function () {
+            input.classList.remove('input-error', 'shake');
+            errEl.classList.remove('show');
+        });
+    }
+    clearErr(username, errUser);
+    clearErr(password, errPass);
+
+    form.addEventListener('submit', function (e) {
+        let valid = true;
+
+        if (!username.value.trim()) {
+            username.classList.add('input-error', 'shake');
+            errUser.classList.add('show');
+            valid = false;
+        }
+        if (!password.value) {
+            password.classList.add('input-error', 'shake');
+            errPass.classList.add('show');
+            valid = false;
+        }
+
+        if (!valid) {
+            e.preventDefault();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Memproses...';
+    });
+});
+</script>
 @endsection

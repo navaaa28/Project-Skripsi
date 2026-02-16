@@ -160,10 +160,163 @@
 
     <div class="panel">
         <h3>Actions</h3>
-        <button type="submit" class="btn">Simpan</button>
+        <button type="submit" class="btn" id="btnSimpan">Simpan</button>
         <div style="margin-top: 10px; font-size: 11px; color: #6b7280;">
             Menyimpan penilaian akademik dan non-akademik untuk siswa yang dipilih.
         </div>
     </div>
 </form>
+
+{{-- ====== Status Flash ====== --}}
+@if (session('status'))
+    <div class="flash-success" id="flashMsg">
+        <span class="flash-icon">✓</span> {{ session('status') }}
+    </div>
+@endif
+@if ($errors->any())
+    <div class="flash-error" id="flashMsg">
+        <span class="flash-icon">!</span>
+        @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
+    </div>
+@endif
+
+{{-- ====== Loading Overlay ====== --}}
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+        <div class="spinner"></div>
+        <div class="loading-title" id="loadingTitle">Menyimpan Data Nilai...</div>
+        <div class="loading-steps">
+            <div class="step active" id="step1"><span class="step-dot"></span> Menyimpan nilai akademik</div>
+            <div class="step" id="step2"><span class="step-dot"></span> Menyimpan data non-akademik</div>
+            <div class="step" id="step3"><span class="step-dot"></span> Menganalisis dengan AI</div>
+            <div class="step" id="step4"><span class="step-dot"></span> Menyelesaikan</div>
+        </div>
+        <div class="loading-hint">Mohon tunggu, jangan menutup halaman ini.</div>
+    </div>
+</div>
+
+<style>
+    /* ---- Flash Messages ---- */
+    .flash-success, .flash-error {
+        position: fixed; top: 16px; right: 16px; z-index: 9000;
+        padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+        display: flex; align-items: flex-start; gap: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        animation: slideIn .35s ease-out;
+        max-width: 380px;
+    }
+    .flash-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .flash-error   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .flash-icon { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+    .flash-success .flash-icon { background: #22c55e; color: #fff; }
+    .flash-error .flash-icon   { background: #ef4444; color: #fff; }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(40px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ---- Loading Overlay ---- */
+    .loading-overlay {
+        display: none;
+        position: fixed; inset: 0; z-index: 10000;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(6px);
+        align-items: center; justify-content: center;
+    }
+    .loading-overlay.show { display: flex; }
+
+    .loading-card {
+        background: #fff; border-radius: 16px; padding: 32px 36px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+        text-align: center; max-width: 360px; width: 90%;
+        animation: popIn .3s ease-out;
+    }
+    @keyframes popIn {
+        from { opacity: 0; transform: scale(.92); }
+        to   { opacity: 1; transform: scale(1); }
+    }
+
+    .spinner {
+        width: 44px; height: 44px; margin: 0 auto 18px;
+        border: 4px solid #e2e8f0; border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-title {
+        font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 18px;
+    }
+
+    .loading-steps { text-align: left; margin: 0 auto; display: inline-block; }
+    .step {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; color: #94a3b8; padding: 5px 0;
+        transition: color .3s ease;
+    }
+    .step.active { color: #2563eb; font-weight: 600; }
+    .step.done   { color: #16a34a; }
+    .step-dot {
+        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        background: #cbd5e1; transition: background .3s ease;
+    }
+    .step.active .step-dot { background: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+    .step.done .step-dot   { background: #16a34a; }
+
+    .loading-hint {
+        margin-top: 16px; font-size: 11px; color: #94a3b8;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form[action*="penilaian"]');
+    const overlay = document.getElementById('loadingOverlay');
+    const title = document.getElementById('loadingTitle');
+    const steps = [
+        document.getElementById('step1'),
+        document.getElementById('step2'),
+        document.getElementById('step3'),
+        document.getElementById('step4'),
+    ];
+
+    if (form) {
+        form.addEventListener('submit', function () {
+            overlay.classList.add('show');
+
+            // Progressive step animation
+            const messages = [
+                { title: 'Menyimpan Data Nilai...', step: 0, delay: 0 },
+                { title: 'Menyimpan Non-Akademik...', step: 1, delay: 1500 },
+                { title: 'Menganalisis dengan AI...', step: 2, delay: 3000 },
+                { title: 'Menyelesaikan proses...', step: 3, delay: 6000 },
+            ];
+
+            messages.forEach(function (msg) {
+                setTimeout(function () {
+                    title.textContent = msg.title;
+                    steps.forEach(function (s, i) {
+                        s.classList.remove('active', 'done');
+                        if (i < msg.step) s.classList.add('done');
+                        if (i === msg.step) s.classList.add('active');
+                    });
+                }, msg.delay);
+            });
+        });
+    }
+
+    // Auto-hide flash after 5 seconds
+    const flash = document.getElementById('flashMsg');
+    if (flash) {
+        setTimeout(function () {
+            flash.style.transition = 'opacity .4s ease';
+            flash.style.opacity = '0';
+            setTimeout(function () { flash.remove(); }, 400);
+        }, 5000);
+    }
+});
+</script>
 @endsection

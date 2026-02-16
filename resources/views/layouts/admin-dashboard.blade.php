@@ -83,9 +83,9 @@
                 <a class="{{ request()->routeIs('admin.kelas.*') ? 'active' : '' }}" href="{{ route('admin.kelas.index') }}">Kelas</a>
                 <a class="{{ request()->routeIs('admin.mapel.*') ? 'active' : '' }}" href="{{ route('admin.mapel.index') }}">Mapel</a>
                 <a class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Users</a>
-                <form method="POST" action="{{ route('logout') }}" style="margin-top: 10px;">
+                <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="margin-top: 10px;">
                     @csrf
-                    <button type="submit" style="width: 100%; text-align: left; background: none; border: none; color: #d1d5db; padding: 10px 12px; cursor: pointer;">
+                    <button type="button" onclick="document.getElementById('logoutModal').style.display='flex'" style="width: 100%; text-align: left; background: none; border: none; color: #d1d5db; padding: 10px 12px; cursor: pointer;">
                         Logout
                     </button>
                 </form>
@@ -94,6 +94,18 @@
         <main class="content">
             @yield('content')
         </main>
+    </div>
+
+    {{-- Logout Modal --}}
+    <div id="logoutModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:12px; padding:24px 28px; width:340px; max-width:90%; box-shadow:0 16px 40px rgba(0,0,0,0.15); text-align:center;">
+            <div style="font-size:15px; font-weight:700; color:#0f172a; margin-bottom:6px;">Konfirmasi Logout</div>
+            <div style="font-size:13px; color:#6b7280; margin-bottom:20px;">Apakah Anda yakin ingin keluar dari sistem?</div>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="document.getElementById('logoutModal').style.display='none'" style="padding:8px 20px; border-radius:8px; border:1px solid #e5e7eb; background:#fff; color:#374151; font-size:13px; font-weight:600; cursor:pointer;">Batal</button>
+                <button onclick="document.getElementById('logoutForm').submit()" style="padding:8px 20px; border-radius:8px; border:none; background:#ef4444; color:#fff; font-size:13px; font-weight:600; cursor:pointer;">Ya, Logout</button>
+            </div>
+        </div>
     </div>
 </body>
 </html>

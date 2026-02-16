@@ -12,10 +12,20 @@
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th, td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
     th { color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 11px; }
-    .pagination { margin-top: 12px; display: flex; justify-content: flex-end; gap: 4px; }
-    .pagination a, .pagination span { border: 1px solid #e5e7eb; padding: 6px 8px; border-radius: 6px; font-size: 12px; color: #374151; text-decoration: none; }
-    .pagination .active span { background: #2563eb; color: #fff; border-color: #2563eb; }
     .muted { color: #6b7280; }
+
+    .pager {
+        margin-top: 12px; display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap;
+    }
+    .pager-info { font-size: 12px; color: #64748b; }
+    .pager-links { display: flex; align-items: center; gap: 6px; }
+    .pager-btn {
+        border: 1px solid #d1d5db; background: #fff; color: #374151;
+        border-radius: 8px; padding: 6px 10px; font-size: 12px; text-decoration: none; line-height: 1;
+    }
+    .pager-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .pager-btn.disabled { opacity: .5; pointer-events: none; }
 </style>
 
 <div class="page-title">Data Siswa (Kelas Wali) - {{ auth()->user()?->guru?->nama_guru ?? auth()->user()?->username }}</div>
@@ -51,14 +61,24 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="muted">Belum ada data siswa.</td>
+                    <td colspan="6" class="muted">Belum ada data siswa.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-    <div class="pagination">
-        {{ $siswas->links() }}
-    </div>
+    @if ($siswas->hasPages())
+        <div class="pager">
+            <div class="pager-info">Menampilkan {{ $siswas->firstItem() }} - {{ $siswas->lastItem() }} dari {{ $siswas->total() }} data</div>
+            <div class="pager-links">
+                <a class="pager-btn {{ $siswas->onFirstPage() ? 'disabled' : '' }}" href="{{ $siswas->previousPageUrl() ?? '#' }}">Prev</a>
+                @foreach ($siswas->getUrlRange(1, $siswas->lastPage()) as $page => $url)
+                    <a class="pager-btn {{ $page === $siswas->currentPage() ? 'active' : '' }}" href="{{ $url }}">{{ $page }}</a>
+                @endforeach
+                <a class="pager-btn {{ $siswas->hasMorePages() ? '' : 'disabled' }}" href="{{ $siswas->nextPageUrl() ?? '#' }}">Next</a>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection
+

@@ -47,7 +47,7 @@
                     {{ session('status') }}
                 </div>
             @endif
-            @if ($errors->any())
+            @if ($errors->any() && !request()->routeIs('login'))
                 <div class="mb-4 text-red-600">
                     <ul>
                         @foreach ($errors->all() as $error)
