@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Siswa;
 use App\Models\Nilai;
 use App\Models\Rekomendasi;
+use App\Models\DokumenSiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class GuruSiswaController extends Controller
 {
@@ -53,5 +55,40 @@ class GuruSiswaController extends Controller
                 ->orderByDesc('semester')
                 ->first(),
         ]);
+    }
+
+    public function dokumen(Siswa $siswa)
+    {
+        $guru = Auth::user()?->guru;
+        $kelasIds = $guru ? $guru->kelasWali()->pluck('id_kelas') : collect();
+
+        if (!$kelasIds->contains($siswa->id_kelas)) {
+            abort(403);
+        }
+
+        $dokumen = DokumenSiswa::where('id_user', $siswa->id_user)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('guru.siswa.dokumen', [
+            'siswa'   => $siswa->load('kelas'),
+            'dokumen' => $dokumen,
+        ]);
+    }
+
+    public function downloadDokumen(Siswa $siswa, DokumenSiswa $dokumen)
+    {
+        $guru = Auth::user()?->guru;
+        $kelasIds = $guru ? $guru->kelasWali()->pluck('id_kelas') : collect();
+
+        if (!$kelasIds->contains($siswa->id_kelas)) {
+            abort(403);
+        }
+
+        if ($dokumen->id_user !== $siswa->id_user) {
+            abort(403);
+        }
+
+        return Storage::disk('public')->download($dokumen->path, $dokumen->nama_file);
     }
 }
