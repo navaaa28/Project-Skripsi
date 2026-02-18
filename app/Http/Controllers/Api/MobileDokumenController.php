@@ -15,23 +15,25 @@ class MobileDokumenController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-
         $dokumen = DokumenSiswa::where('id_user', $user->id_user)
             ->orderByDesc('created_at')
             ->get()
-            ->map(fn($d) => [
-        'id' => $d->id,
-        'jenis_dokumen' => $d->jenis_dokumen,
-        'label' => $d->label,
-        'nama_file' => $d->nama_file,
-        'mime_type' => $d->mime_type,
-        'size' => $d->size,
-        'created_at' => $d->created_at->toDateTimeString(),
-        ]);
+            ->map(function ($d) {
+            return [
+            'id' => $d->id,
+            'jenis_dokumen' => $d->jenis_dokumen,
+            'label' => $d->label,
+            'nama_file' => $d->nama_file,
+            'mime_type' => $d->mime_type,
+            'size' => $d->size,
+            'url' => url(Storage::url($d->path)), // Full public URL
+            'created_at' => $d->created_at->toIso8601String(),
+            ];
+        });
 
         return response()->json([
-            'jenis_tersedia' => DokumenSiswa::JENIS,
             'dokumen' => $dokumen,
+            'jenis_tersedia' => DokumenSiswa::JENIS,
         ]);
     }
 
@@ -42,7 +44,7 @@ class MobileDokumenController extends Controller
     {
         $request->validate([
             'jenis_dokumen' => 'required|string|in:' . implode(',', array_keys(DokumenSiswa::JENIS)),
-            'file' => 'required|file|max:5120|mimes:pdf,jpg,jpeg,png',
+            'file' => 'required|file|max:2048|mimes:pdf,jpg,jpeg,png', // Max 2MB
         ]);
 
         $user = $request->user();
