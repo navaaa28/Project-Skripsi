@@ -12,20 +12,20 @@ use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MobileSiswaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
-Route::post('/login', [AuthController::class, 'login'])->name('login.attempt')->middleware('guest');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::get('/login', [AuthController::class , 'showLogin'])->name('login')->middleware('guest');
+Route::post('/login', [AuthController::class , 'login'])->name('login.attempt')->middleware('guest');
+Route::post('/logout', [AuthController::class , 'logout'])->name('logout')->middleware('auth');
 
 Route::get('/', function () {
     return redirect()->route('admin.dashboard');
 })->middleware('auth');
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class , 'index'])->name('dashboard');
 
-    Route::post('guru/import', [GuruController::class, 'import'])->name('guru.import');
+    Route::post('guru/import', [GuruController::class , 'import'])->name('guru.import');
     Route::resource('guru', GuruController::class);
-    Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
+    Route::post('siswa/import', [SiswaController::class , 'import'])->name('siswa.import');
     Route::resource('siswa', SiswaController::class);
     Route::resource('kelas', KelasController::class);
     Route::resource('mapel', MapelController::class);
@@ -33,12 +33,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 });
 
 Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(function () {
-    Route::get('/dashboard', [GuruDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/siswa', [\App\Http\Controllers\GuruSiswaController::class, 'index'])->name('siswa.index');
-    Route::get('/siswa/{siswa}', [\App\Http\Controllers\GuruSiswaController::class, 'show'])->name('siswa.show');
-    Route::get('/kelas/{kelas}', [\App\Http\Controllers\GuruKelasController::class, 'show'])->name('kelas.show');
-    Route::get('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'index'])->name('penilaian.index');
-    Route::post('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class, 'store'])->name('penilaian.store');
+    Route::get('/dashboard', [GuruDashboardController::class , 'index'])->name('dashboard');
+    Route::get('/siswa', [\App\Http\Controllers\GuruSiswaController::class , 'index'])->name('siswa.index');
+    Route::get('/siswa/{siswa}', [\App\Http\Controllers\GuruSiswaController::class , 'show'])->name('siswa.show');
+    Route::get('/kelas/{kelas}', [\App\Http\Controllers\GuruKelasController::class , 'show'])->name('kelas.show');
+    Route::get('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class , 'index'])->name('penilaian.index');
+    Route::post('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class , 'store'])->name('penilaian.store');
+    Route::get('/siswa/{siswa}/dokumen', [\App\Http\Controllers\GuruSiswaController::class , 'dokumen'])->name('siswa.dokumen');
+    Route::get('/siswa/{siswa}/dokumen/{dokumen}/download', [\App\Http\Controllers\GuruSiswaController::class , 'downloadDokumen'])->name('siswa.dokumen.download');
 });
-
-

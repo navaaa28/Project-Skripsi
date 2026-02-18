@@ -39,4 +39,9 @@ class Siswa extends Model
     {
         return $this->belongsTo(Kelas::class , 'id_kelas', 'id_kelas');
     }
+
+    public function dokumen()
+    {
+        return $this->hasMany(DokumenSiswa::class , 'id_user', 'id_user');
+    }
 }
