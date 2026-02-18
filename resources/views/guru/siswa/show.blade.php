@@ -36,6 +36,9 @@
             <div class="breadcrumb">NIPD: {{ $siswa->nipd ?? '-' }}</div>
             <div class="breadcrumb">Kelas: {{ $siswa->kelas?->nama_kelas ?? '-' }}</div>
         </div>
+        <a href="{{ route('guru.siswa.dokumen', $siswa->id_user) }}" style="margin-left:auto; text-decoration:none; background:#2563eb; color:white; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600;">
+            Lihat Dokumen
+        </a>
     </div>
 </div>
 
