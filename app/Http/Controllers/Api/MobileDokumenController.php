@@ -26,7 +26,7 @@ class MobileDokumenController extends Controller
             'nama_file' => $d->nama_file,
             'mime_type' => $d->mime_type,
             'size' => $d->size,
-            'url' => Storage::disk('supabase')->url($d->path), // Full public URL
+            'url' => Storage::disk('supabase')->temporaryUrl($d->path, now()->addMinutes(60)), // Signed URL
             'created_at' => $d->created_at->toIso8601String(),
             ];
         });
