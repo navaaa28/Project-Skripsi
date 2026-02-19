@@ -13,7 +13,7 @@ class MobileSiswaController extends Controller
     public function me(Request $request)
     {
         $user = $request->user();
-        $siswa = $user->siswa?->load('kelas');
+        $siswa = $user->siswa?->load('kelas.waliGuru');
 
         return response()->json([
             'user' => [
@@ -28,6 +28,11 @@ class MobileSiswaController extends Controller
                 'nisn' => $siswa->nisn,
                 'rombel_saat_ini' => $siswa->rombel_saat_ini,
                 'kelas' => $siswa->kelas?->nama_kelas,
+                'wali_kelas' => $siswa->kelas?->waliGuru ? [
+                    'id_user' => $siswa->kelas->waliGuru->id_user,
+                    'nama_guru' => $siswa->kelas->waliGuru->nama_guru,
+                    'nip' => $siswa->kelas->waliGuru->nip,
+                ] : null,
             ] : null,
         ]);
     }
