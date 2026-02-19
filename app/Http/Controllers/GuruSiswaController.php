@@ -89,6 +89,6 @@ class GuruSiswaController extends Controller
             abort(403);
         }
 
-        return Storage::disk('public')->download($dokumen->path, $dokumen->nama_file);
+        return Storage::disk('supabase')->download($dokumen->path, $dokumen->nama_file);
     }
 }
