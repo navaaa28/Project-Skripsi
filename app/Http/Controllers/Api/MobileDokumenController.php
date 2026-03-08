@@ -26,7 +26,7 @@ class MobileDokumenController extends Controller
             'nama_file' => $d->nama_file,
             'mime_type' => $d->mime_type,
             'size' => $d->size,
-            'url' => Storage::disk('supabase')->temporaryUrl($d->path, now()->addMinutes(60)), // Signed URL
+            'url' => Storage::disk('public')->url($d->path), // Local URL
             'created_at' => $d->created_at->toIso8601String(),
             ];
         });
@@ -50,7 +50,7 @@ class MobileDokumenController extends Controller
         $user = $request->user();
         $file = $request->file('file');
 
-        $path = $file->store("dokumen_siswa/{$user->id_user}", 'supabase');
+        $path = $file->store("dokumen_siswa/{$user->id_user}", 'public');
 
         $dokumen = DokumenSiswa::create([
             'id_user' => $user->id_user,
@@ -81,7 +81,7 @@ class MobileDokumenController extends Controller
         $user = $request->user();
         $dokumen = DokumenSiswa::where('id_user', $user->id_user)->findOrFail($id);
 
-        Storage::disk('supabase')->delete($dokumen->path);
+        Storage::disk('public')->delete($dokumen->path);
         $dokumen->delete();
 
         return response()->json(['message' => 'Dokumen berhasil dihapus.']);

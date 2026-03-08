@@ -73,10 +73,25 @@ class MobileSiswaController extends Controller
     {
         $user = $request->user();
         $semester = $request->integer('semester');
+        $kelas = $request->input('kelas');
 
-        $query = Rekomendasi::where('id_user', $user->id_user)->orderByDesc('semester');
+        $query = Rekomendasi::with('kelas')
+            ->where('id_user', $user->id_user)
+            ->orderByDesc('semester')
+            ->orderByDesc('tgl_analisis');
+
         if ($semester) {
             $query->where('semester', $semester);
+        }
+
+        if ($request->filled('kelas')) {
+            if (is_numeric($kelas)) {
+                $query->where('id_kelas', (int) $kelas);
+            } else {
+                $query->whereHas('kelas', function ($sub) use ($kelas) {
+                    $sub->where('nama_kelas', $kelas);
+                });
+            }
         }
 
         $rek = $query->first();
@@ -85,7 +100,13 @@ class MobileSiswaController extends Controller
         }
 
         return response()->json([
+            'filters' => [
+                'kelas' => $kelas,
+                'semester' => $semester,
+            ],
             'rekomendasi' => [
+                'id_kelas' => $rek->id_kelas,
+                'kelas' => $rek->kelas?->nama_kelas,
                 'semester' => $rek->semester,
                 'minat_utama' => $rek->minat_utama,
                 'bakat_potensial' => $rek->bakat_potensial,
@@ -103,11 +124,27 @@ class MobileSiswaController extends Controller
     {
         $user = $request->user();
         $semester = $request->integer('semester');
+        $kelas = $request->input('kelas');
 
-        $query = Rekomendasi::where('id_user', $user->id_user)->orderByDesc('semester');
+        $query = Rekomendasi::with('kelas')
+            ->where('id_user', $user->id_user)
+            ->orderByDesc('semester')
+            ->orderByDesc('tgl_analisis');
+
         if ($semester) {
             $query->where('semester', $semester);
         }
+
+        if ($request->filled('kelas')) {
+            if (is_numeric($kelas)) {
+                $query->where('id_kelas', (int) $kelas);
+            } else {
+                $query->whereHas('kelas', function ($sub) use ($kelas) {
+                    $sub->where('nama_kelas', $kelas);
+                });
+            }
+        }
+
         $rek = $query->first();
         if (!$rek) {
             return response()->json(['message' => 'Rekomendasi belum tersedia.'], 404);
@@ -116,11 +153,16 @@ class MobileSiswaController extends Controller
         $siswa = $user->siswa?->load('kelas');
         $semester = $rek->semester;
 
-        $nilai = Nilai::with('mapel')
+        $nilaiQuery = Nilai::with('mapel')
             ->where('id_user', $user->id_user)
             ->where('semester', $semester)
-            ->orderBy('id_mapel')
-            ->get();
+            ->orderBy('id_mapel');
+
+        if ($rek->id_kelas) {
+            $nilaiQuery->where('id_kelas', $rek->id_kelas);
+        }
+
+        $nilai = $nilaiQuery->get();
 
         $avg = $nilai->whereNotNull('nilai_akhir')->avg('nilai_akhir');
 

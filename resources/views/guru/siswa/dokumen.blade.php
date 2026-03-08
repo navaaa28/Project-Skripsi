@@ -63,17 +63,29 @@
                     <td><strong>{{ $doc->label }}</strong></td>
                     <td>{{ $doc->nama_file }}</td>
                     <td>
-                        @if(str_contains($doc->mime_type, 'pdf'))
+                        @php
+                            $mimeType = strtolower((string) ($doc->mime_type ?? ''));
+                            $fileName = strtolower((string) ($doc->nama_file ?? ''));
+                            $isPdf = str_contains($mimeType, 'pdf') || str_ends_with($fileName, '.pdf');
+                            $isImage = str_starts_with($mimeType, 'image/')
+                                || str_ends_with($fileName, '.jpg')
+                                || str_ends_with($fileName, '.jpeg')
+                                || str_ends_with($fileName, '.png');
+                        @endphp
+                        @if($isPdf)
                             <span class="badge badge-pdf">PDF</span>
-                        @else
+                        @elseif($isImage)
                             <span class="badge badge-image">Gambar</span>
+                        @else
+                            <span class="badge" style="background:#e5e7eb;color:#4b5563;">Lainnya</span>
                         @endif
+                        
                     </td>
                     <td class="file-size">{{ number_format($doc->size / 1024, 0) }} KB</td>
                     <td>{{ $doc->created_at->format('d M Y H:i') }}</td>
                     <td>
                         <a href="{{ route('guru.siswa.dokumen.download', [$siswa, $doc]) }}" class="btn-sm btn-primary">
-                            ⬇ Download
+                            Download
                         </a>
                     </td>
                 </tr>

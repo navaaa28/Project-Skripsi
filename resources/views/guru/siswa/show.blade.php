@@ -19,6 +19,44 @@
     .pill .pct { font-weight: 700; color: #2563eb; }
     .muted { color: #6b7280; font-size: 12px; }
     .section-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 10px;
+        margin: 2px 0 12px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+    .filter-group label { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; }
+    .filter-group select {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 12px;
+        background: #fff;
+        color: #1f2937;
+    }
+    .filter-actions { display: flex; gap: 8px; }
+    .btn-filter {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .btn-filter-reset {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #374151;
+        font-size: 12px;
+        text-decoration: none;
+    }
 </style>
 
 <div class="topbar">
@@ -43,6 +81,35 @@
 </div>
 
 <div class="panel">
+    <form method="GET" action="{{ route('guru.siswa.show', $siswa) }}" class="filter-form">
+        <div class="filter-group">
+            <label for="kelas">Kelas</label>
+            <select name="kelas" id="kelas">
+                <option value="">Semua kelas</option>
+                @foreach ($kelasOptions as $kelas)
+                    <option value="{{ $kelas->id_kelas }}" {{ (string) $selectedKelas === (string) $kelas->id_kelas ? 'selected' : '' }}>
+                        {{ $kelas->nama_kelas }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="semester">Semester</label>
+            <select name="semester" id="semester">
+                <option value="">Semua semester</option>
+                @foreach ($semesterOptions as $semester)
+                    <option value="{{ $semester }}" {{ (string) $selectedSemester === (string) $semester ? 'selected' : '' }}>
+                        Semester {{ $semester }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn-filter">Terapkan</button>
+            <a href="{{ route('guru.siswa.show', $siswa) }}" class="btn-filter-reset">Reset</a>
+        </div>
+    </form>
+
     <div class="tabs">
         <button type="button" class="tab active" data-tab="riwayat">Riwayat Nilai</button>
         <button type="button" class="tab" data-tab="grafik">Grafik Perkembangan</button>
@@ -75,7 +142,21 @@
 
     <div id="tab-grafik" style="display:none;">
         <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Tren Nilai Akademik</div>
+        <div class="muted" style="margin-bottom: 8px;">
+            Ringkasan ini membantu guru menjelaskan poin utama perkembangan nilai kepada orang tua.
+        </div>
+        <div class="chart-toolbar">
+            <label for="focusMapel">Fokus mapel:</label>
+            <select id="focusMapel" class="chart-select">
+                <option value="__all__">Semua mapel</option>
+            </select>
+            <span class="muted">Arahkan kursor ke titik nilai untuk melihat perubahan per semester.</span>
+        </div>
+        <div id="grafikSummary" class="chart-summary"></div>
         <canvas id="nilaiChart" height="120"></canvas>
+        <div class="muted" style="margin-top: 6px;">
+            Skala nilai menyesuaikan rentang data siswa agar perubahan kecil lebih mudah terbaca.
+        </div>
     </div>
 </div>
 
@@ -185,6 +266,45 @@
         display: flex; flex-direction: column; gap: 4px;
     }
     .catatan-list li { font-size: 12px; color: #475569; line-height: 1.55; }
+    .chart-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        margin-bottom: 10px;
+        font-size: 12px;
+    }
+    .chart-select {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 12px;
+        background: #fff;
+        color: #1f2937;
+    }
+    .chart-summary {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #fafafa;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: #374151;
+        display: grid;
+        gap: 4px;
+    }
+    .summary-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        width: fit-content;
+    }
+    .summary-up { background: #dcfce7; color: #166534; }
+    .summary-down { background: #fee2e2; color: #991b1b; }
+    .summary-stable { background: #e5e7eb; color: #374151; }
 
     @media (max-width: 720px) { .hasil-grid { grid-template-columns: 1fr; } }
 </style>
@@ -204,11 +324,39 @@
         const semesters = @json($semesters);
         const series = @json($series);
         const labels = semesters.length ? semesters : [1, 2];
+        const focusMapel = document.getElementById('focusMapel');
+        const grafikSummary = document.getElementById('grafikSummary');
 
         const colors = [
             '#ef4444', '#2563eb', '#16a34a', '#f59e0b', '#8b5cf6', '#0ea5e9',
             '#14b8a6', '#f97316', '#84cc16', '#ec4899'
         ];
+
+        function toNumber(value) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function pickFirstLast(arr) {
+            const valid = arr.map(toNumber).filter(v => v !== null);
+            if (!valid.length) return { first: null, last: null };
+            return { first: valid[0], last: valid[valid.length - 1] };
+        }
+
+        function deltaLabel(delta) {
+            if (delta > 0) return `naik +${delta.toFixed(1)}`;
+            if (delta < 0) return `turun ${delta.toFixed(1)}`;
+            return 'stabil';
+        }
+
+        function rgbaFromHex(hex, alpha) {
+            const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            if (!m) return hex;
+            const r = parseInt(m[1], 16);
+            const g = parseInt(m[2], 16);
+            const b = parseInt(m[3], 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
 
         const datasets = Object.keys(series).map((name, idx) => {
             const data = labels.map(s => (series[name] && series[name][s] !== undefined) ? series[name][s] : null);
@@ -217,26 +365,123 @@
                 data,
                 borderColor: colors[idx % colors.length],
                 backgroundColor: colors[idx % colors.length],
+                pointRadius: 4,
+                pointHoverRadius: 5,
+                borderWidth: 2,
                 tension: 0.3,
-                spanGaps: true
+                spanGaps: true,
+                originalColor: colors[idx % colors.length]
             };
         });
 
+        const allValues = datasets.flatMap(ds => ds.data).map(toNumber).filter(v => v !== null);
+        const minValue = allValues.length ? Math.min(...allValues) : 0;
+        const maxValue = allValues.length ? Math.max(...allValues) : 100;
+        const yMin = Math.max(0, Math.floor((minValue - 5) / 5) * 5);
+        const yMax = Math.min(100, Math.ceil((maxValue + 5) / 5) * 5);
+
+        function renderSummary() {
+            if (!grafikSummary) return;
+            if (labels.length < 2 || !datasets.length) {
+                grafikSummary.innerHTML = '<div class="muted">Butuh minimal 2 semester untuk membaca tren naik/turun.</div>';
+                return;
+            }
+
+            let up = 0;
+            let down = 0;
+            let stable = 0;
+            let best = null;
+            let worst = null;
+
+            datasets.forEach(ds => {
+                const { first, last } = pickFirstLast(ds.data);
+                if (first === null || last === null) return;
+                const delta = Number((last - first).toFixed(1));
+                if (delta > 0) up++;
+                else if (delta < 0) down++;
+                else stable++;
+
+                if (!best || delta > best.delta) best = { label: ds.label, delta };
+                if (!worst || delta < worst.delta) worst = { label: ds.label, delta };
+            });
+
+            const parts = [];
+            parts.push(`<div><span class="summary-badge summary-up">Naik: ${up}</span> <span class="summary-badge summary-down">Turun: ${down}</span> <span class="summary-badge summary-stable">Stabil: ${stable}</span></div>`);
+            if (best) {
+                parts.push(`<div>Peningkatan terbaik: <strong>${best.label}</strong> (${deltaLabel(best.delta)}).</div>`);
+            }
+            if (worst) {
+                parts.push(`<div>Perlu perhatian: <strong>${worst.label}</strong> (${deltaLabel(worst.delta)}).</div>`);
+            }
+
+            grafikSummary.innerHTML = parts.join('');
+        }
+
+        function applyFocus(value, chart) {
+            chart.data.datasets.forEach(ds => {
+                const focused = value === '__all__' || ds.label === value;
+                ds.borderColor = focused ? ds.originalColor : rgbaFromHex(ds.originalColor, 0.2);
+                ds.backgroundColor = focused ? ds.originalColor : rgbaFromHex(ds.originalColor, 0.2);
+                ds.borderWidth = focused ? 3 : 1.5;
+                ds.pointRadius = focused ? 4 : 2;
+            });
+            chart.update();
+        }
+
         const ctx = document.getElementById('nilaiChart');
         if (!ctx) return;
-        new Chart(ctx, {
+        const chart = new Chart(ctx, {
             type: 'line',
             data: { labels: labels.map(s => `Semester ${s}`), datasets },
             options: {
                 responsive: true,
+                interaction: { mode: 'nearest', intersect: false },
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'line',
+                            boxWidth: 18,
+                            font: { size: 11 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function (context) {
+                                const dataset = context.dataset;
+                                const { first, last } = pickFirstLast(dataset.data);
+                                if (first === null || last === null || labels.length < 2) return '';
+                                const delta = Number((last - first).toFixed(1));
+                                return `Tren ${labels[0]} ke ${labels[labels.length - 1]}: ${deltaLabel(delta)}`;
+                            }
+                        }
+                    }
                 },
                 scales: {
-                    y: { min: 0, max: 100, ticks: { stepSize: 10 } }
+                    y: {
+                        min: yMin,
+                        max: yMax,
+                        ticks: { stepSize: 5 }
+                    }
                 }
             }
         });
+
+        if (focusMapel) {
+            Object.keys(series).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                focusMapel.appendChild(option);
+            });
+            focusMapel.addEventListener('change', function () {
+                applyFocus(this.value, chart);
+            });
+        }
+
+        renderSummary();
+
         const tabButtons = document.querySelectorAll('.tab[data-tab]');
         const tabRiwayat = document.getElementById('tab-riwayat');
         const tabGrafik = document.getElementById('tab-grafik');

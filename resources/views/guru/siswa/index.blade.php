@@ -32,8 +32,15 @@
 
 <div class="filter-box">
     <form method="GET" action="{{ route('guru.siswa.index') }}" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <select name="kelas" class="input">
+            <option value="">Semua Kelas</option>
+            @foreach ($kelasOptions as $k)
+                <option value="{{ $k->id_kelas }}" @selected(request('kelas') == $k->id_kelas)>{{ $k->nama_kelas }}</option>
+            @endforeach
+        </select>
         <input type="text" name="q" value="{{ request('q') }}" class="input" placeholder="Cari Nama/NIPD/NISN">
         <button class="btn-outline" type="submit">Cari</button>
+        <a class="btn-outline" href="{{ route('guru.siswa.index') }}" style="text-decoration:none; color:inherit;">Reset</a>
     </form>
 </div>
 
@@ -81,4 +88,3 @@
     @endif
 </div>
 @endsection
-

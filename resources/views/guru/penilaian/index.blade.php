@@ -63,19 +63,25 @@
         <div class="grid">
             <div class="field">
                 <label class="label">Kelas</label>
-                <select name="id_kelas" class="select" required>
+                <select name="id_kelas" id="id_kelas" class="select" required>
                     <option value="">Pilih Kelas</option>
                     @foreach ($kelas as $k)
-                        <option value="{{ $k->id_kelas }}">{{ $k->nama_kelas }}</option>
+                        <option value="{{ $k->id_kelas }}" @selected(old('id_kelas') == $k->id_kelas)>{{ $k->nama_kelas }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="field">
                 <label class="label">Siswa</label>
-                <select name="id_user" class="select" required>
+                <select name="id_user" id="id_user" class="select" required>
                     <option value="">Pilih Siswa</option>
                     @foreach ($siswas as $s)
-                        <option value="{{ $s->id_user }}">{{ $s->nama_siswa }} ({{ $s->nipd }})</option>
+                        <option
+                            value="{{ $s->id_user }}"
+                            data-kelas="{{ $s->id_kelas }}"
+                            @selected(old('id_user') == $s->id_user)
+                        >
+                            {{ $s->nama_siswa }} ({{ $s->nipd }})
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -276,12 +282,48 @@ document.addEventListener('DOMContentLoaded', function () {
     const form = document.querySelector('form[action*="penilaian"]');
     const overlay = document.getElementById('loadingOverlay');
     const title = document.getElementById('loadingTitle');
+    const kelasSelect = document.getElementById('id_kelas');
+    const siswaSelect = document.getElementById('id_user');
     const steps = [
         document.getElementById('step1'),
         document.getElementById('step2'),
         document.getElementById('step3'),
         document.getElementById('step4'),
     ];
+
+    function filterSiswaByKelas() {
+        if (!kelasSelect || !siswaSelect) return;
+
+        const selectedKelas = kelasSelect.value;
+        const currentSiswa = siswaSelect.value;
+        let currentSiswaVisible = false;
+
+        siswaSelect.disabled = selectedKelas === '';
+
+        Array.from(siswaSelect.options).forEach(function (option, index) {
+            if (index === 0) {
+                option.hidden = false;
+                return;
+            }
+
+            const optionKelas = option.dataset.kelas;
+            const isVisible = selectedKelas !== '' && optionKelas === selectedKelas;
+            option.hidden = !isVisible;
+
+            if (isVisible && option.value === currentSiswa) {
+                currentSiswaVisible = true;
+            }
+        });
+
+        if (!currentSiswaVisible) {
+            siswaSelect.value = '';
+        }
+    }
+
+    if (kelasSelect && siswaSelect) {
+        kelasSelect.addEventListener('change', filterSiswaByKelas);
+        filterSiswaByKelas();
+    }
 
     if (form) {
         form.addEventListener('submit', function () {

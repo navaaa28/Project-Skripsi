@@ -39,6 +39,7 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::get('/kelas/{kelas}', [\App\Http\Controllers\GuruKelasController::class , 'show'])->name('kelas.show');
     Route::get('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class , 'index'])->name('penilaian.index');
     Route::post('/penilaian', [\App\Http\Controllers\GuruPenilaianController::class , 'store'])->name('penilaian.store');
+    Route::get('/riwayat-analisis', [\App\Http\Controllers\GuruAnalisisController::class , 'index'])->name('analisis.index');
     Route::get('/siswa/{siswa}/dokumen', [\App\Http\Controllers\GuruSiswaController::class , 'dokumen'])->name('siswa.dokumen');
     Route::get('/siswa/{siswa}/dokumen/{dokumen}/download', [\App\Http\Controllers\GuruSiswaController::class , 'downloadDokumen'])->name('siswa.dokumen.download');
 });

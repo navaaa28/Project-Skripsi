@@ -6,6 +6,7 @@ use App\Models\Siswa;
 use App\Models\Nilai;
 use App\Models\Rekomendasi;
 use App\Models\DokumenSiswa;
+use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -15,9 +16,17 @@ class GuruSiswaController extends Controller
     public function index(Request $request)
     {
         $guru = Auth::user()?->guru;
-        $kelasIds = $guru ? $guru->kelasWali()->pluck('id_kelas') : collect();
+        $kelasOptions = $guru ? $guru->kelasWali()->orderBy('nama_kelas')->get() : collect();
+        $kelasIds = $kelasOptions->pluck('id_kelas');
 
         $query = Siswa::with('kelas')->whereIn('id_kelas', $kelasIds)->orderBy('nama_siswa');
+
+        if ($request->filled('kelas')) {
+            $kelasId = (int) $request->input('kelas');
+            if ($kelasIds->contains($kelasId)) {
+                $query->where('id_kelas', $kelasId);
+            }
+        }
 
         if ($request->filled('q')) {
             $q = $request->string('q');
@@ -29,11 +38,12 @@ class GuruSiswaController extends Controller
         }
 
         return view('guru.siswa.index', [
-            'siswas' => $query->paginate(10)->appends($request->only(['q'])),
+            'siswas' => $query->paginate(10)->appends($request->only(['q', 'kelas'])),
+            'kelasOptions' => $kelasOptions,
         ]);
     }
 
-    public function show(Siswa $siswa)
+    public function show(Request $request, Siswa $siswa)
     {
         $guru = Auth::user()?->guru;
         $kelasIds = $guru ? $guru->kelasWali()->pluck('id_kelas') : collect();
@@ -42,18 +52,91 @@ class GuruSiswaController extends Controller
             abort(403);
         }
 
-        $nilai = Nilai::with('mapel')
-            ->where('id_user', $siswa->id_user)
+        $selectedKelas = null;
+        if ($request->filled('kelas')) {
+            $kelasId = (int) $request->input('kelas');
+            if ($kelasIds->contains($kelasId)) {
+                $selectedKelas = $kelasId;
+            }
+        }
+
+        $selectedSemester = null;
+        if ($request->filled('semester')) {
+            $semester = (int) $request->input('semester');
+            if ($semester > 0) {
+                $selectedSemester = $semester;
+            }
+        }
+
+        $nilaiBase = Nilai::where('id_user', $siswa->id_user)
+            ->whereIn('id_kelas', $kelasIds);
+
+        if ($selectedKelas !== null) {
+            $nilaiBase->where('id_kelas', $selectedKelas);
+        }
+
+        $nilai = (clone $nilaiBase)
+            ->with('mapel')
+            ->when($selectedSemester !== null, fn ($q) => $q->where('semester', $selectedSemester))
             ->orderBy('semester')
             ->orderBy('id_mapel')
             ->get();
 
+        $nilaiSemesters = (clone $nilaiBase)
+            ->select('semester')
+            ->distinct()
+            ->pluck('semester');
+
+        $rekomSemesters = Rekomendasi::where('id_user', $siswa->id_user)
+            ->whereIn('id_kelas', $kelasIds)
+            ->when($selectedKelas !== null, fn ($q) => $q->where('id_kelas', $selectedKelas))
+            ->select('semester')
+            ->distinct()
+            ->pluck('semester');
+
+        $semesterOptions = $nilaiSemesters
+            ->merge($rekomSemesters)
+            ->unique()
+            ->sort()
+            ->values();
+
+        $nilaiKelasIds = Nilai::where('id_user', $siswa->id_user)
+            ->whereIn('id_kelas', $kelasIds)
+            ->select('id_kelas')
+            ->distinct()
+            ->pluck('id_kelas');
+
+        $rekomKelasIds = Rekomendasi::where('id_user', $siswa->id_user)
+            ->whereIn('id_kelas', $kelasIds)
+            ->select('id_kelas')
+            ->distinct()
+            ->pluck('id_kelas');
+
+        $availableKelasIds = $nilaiKelasIds->merge($rekomKelasIds)->unique()->values();
+        if ($availableKelasIds->isEmpty() && $kelasIds->contains($siswa->id_kelas)) {
+            $availableKelasIds = collect([$siswa->id_kelas]);
+        }
+
+        $kelasOptions = Kelas::whereIn('id_kelas', $availableKelasIds)
+            ->orderBy('nama_kelas')
+            ->get();
+
+        $rekomendasi = Rekomendasi::where('id_user', $siswa->id_user)
+            ->whereIn('id_kelas', $kelasIds)
+            ->when($selectedKelas !== null, fn ($q) => $q->where('id_kelas', $selectedKelas))
+            ->when($selectedSemester !== null, fn ($q) => $q->where('semester', $selectedSemester))
+            ->orderByDesc('semester')
+            ->orderByDesc('tgl_analisis')
+            ->first();
+
         return view('guru.siswa.show', [
             'siswa' => $siswa->load('kelas'),
             'nilai' => $nilai,
-            'rekomendasi' => Rekomendasi::where('id_user', $siswa->id_user)
-                ->orderByDesc('semester')
-                ->first(),
+            'rekomendasi' => $rekomendasi,
+            'kelasOptions' => $kelasOptions,
+            'semesterOptions' => $semesterOptions,
+            'selectedKelas' => $selectedKelas,
+            'selectedSemester' => $selectedSemester,
         ]);
     }
 
@@ -89,6 +172,6 @@ class GuruSiswaController extends Controller
             abort(403);
         }
 
-        return Storage::disk('supabase')->download($dokumen->path, $dokumen->nama_file);
+        return Storage::disk('public')->download($dokumen->path, $dokumen->nama_file);
     }
 }

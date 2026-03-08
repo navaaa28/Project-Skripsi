@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard Guru')</title>
+    <link rel="icon" type="image/png" href="{{ asset('storage/icon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('storage/icon.png') }}">
     <style>
         :root {
             --sidebar: #1f2937;
@@ -52,7 +54,7 @@
                 <a class="{{ request()->routeIs('guru.dashboard') ? 'active' : '' }}" href="{{ route('guru.dashboard') }}">Dashboard</a>
                 <a class="{{ request()->routeIs('guru.penilaian.*') ? 'active' : '' }}" href="{{ route('guru.penilaian.index') }}">Kelola Penilaian</a>
                 <a class="{{ request()->routeIs('guru.siswa.*') ? 'active' : '' }}" href="{{ route('guru.siswa.index') }}">Data Siswa</a>
-                <a href="#" onclick="return false;">Riwayat Analisis</a>
+                <a class="{{ request()->routeIs('guru.analisis.*') ? 'active' : '' }}" href="{{ route('guru.analisis.index') }}">Riwayat Analisis</a>
                 <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="margin-top: 10px;">
                     @csrf
                     <button type="button" onclick="document.getElementById('logoutModal').style.display='flex'" style="width: 100%; text-align: left; background: none; border: none; color: #d1d5db; padding: 10px 12px; cursor: pointer;">

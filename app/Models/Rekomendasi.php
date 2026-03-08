@@ -15,6 +15,7 @@ class Rekomendasi extends Model
 
     protected $fillable = [
         'id_user',
+        'id_kelas',
         'semester',
         'minat_utama',
         'bakat_potensial',
@@ -42,5 +43,10 @@ class Rekomendasi extends Model
     public function siswa()
     {
         return $this->belongsTo(Siswa::class , 'id_user', 'id_user');
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class , 'id_kelas', 'id_kelas');
     }
 }

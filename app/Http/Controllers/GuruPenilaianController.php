@@ -196,9 +196,11 @@ class GuruPenilaianController extends Controller
         Rekomendasi::updateOrCreate(
             [
                 'id_user' => $idUser,
+                'id_kelas' => $idKelas,
                 'semester' => $semester,
             ],
             [
+                'id_kelas' => $idKelas,
                 'minat_utama' => $minatUtama,
                 'bakat_potensial' => $bakatPotensial,
                 'confidence_score' => data_get($result, 'confidence_score'),
