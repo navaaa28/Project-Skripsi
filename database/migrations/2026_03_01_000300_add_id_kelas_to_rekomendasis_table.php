@@ -23,14 +23,23 @@ return new class extends Migration
         // Backfill existing rows so historical data can be filtered by class.
         DB::statement("
             UPDATE rekomendasis r
-            LEFT JOIN nilais n
-                ON n.id_user = r.id_user
-               AND n.semester = r.semester
-               AND n.deleted_at IS NULL
-            LEFT JOIN siswas s
-                ON s.id_user = r.id_user
-               AND s.deleted_at IS NULL
-            SET r.id_kelas = COALESCE(n.id_kelas, s.id_kelas)
+            SET id_kelas = COALESCE(
+                (
+                    SELECT n.id_kelas
+                    FROM nilais n
+                    WHERE n.id_user = r.id_user
+                      AND n.semester = r.semester
+                      AND n.deleted_at IS NULL
+                    LIMIT 1
+                ),
+                (
+                    SELECT s.id_kelas
+                    FROM siswas s
+                    WHERE s.id_user = r.id_user
+                      AND s.deleted_at IS NULL
+                    LIMIT 1
+                )
+            )
             WHERE r.id_kelas IS NULL
         ");
 

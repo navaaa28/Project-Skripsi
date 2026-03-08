@@ -32,16 +32,41 @@
     .admin-stat-note { font-size: 12px; color: #64748b; }
 
     .admin-chart-title { margin: 0 0 10px; font-size: 16px; font-weight: 700; color: #0f172a; }
-    .admin-chart-placeholder {
-        border: 1px dashed #cbd5e1;
+    .admin-chart-wrap {
+        border: 1px solid #e2e8f0;
         border-radius: 10px;
-        min-height: 220px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #64748b;
-        font-size: 13px;
+        padding: 14px;
         background: #f8fafc;
+        min-height: 220px;
+    }
+    .admin-chart-grid {
+        height: 220px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+        gap: 12px;
+        align-items: end;
+    }
+    .admin-chart-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .admin-chart-value {
+        font-size: 12px;
+        color: #334155;
+        font-weight: 600;
+    }
+    .admin-chart-bar {
+        width: 100%;
+        max-width: 60px;
+        border-radius: 8px 8px 0 0;
+        background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+        min-height: 8px;
+    }
+    .admin-chart-label {
+        font-size: 12px;
+        color: #64748b;
     }
 
     @media (max-width: 900px) {
@@ -81,7 +106,23 @@
 
     <div class="admin-index-card">
         <h3 class="admin-chart-title">Statistik Siswa per Angkatan</h3>
-        <div class="admin-chart-placeholder">Bar Chart Placeholder</div>
+        <div class="admin-chart-wrap">
+            @php
+                $maxTotal = max(1, (int) collect($angkatanStats)->max('total'));
+            @endphp
+            <div class="admin-chart-grid">
+                @foreach ($angkatanStats as $item)
+                    @php
+                        $height = max(8, (int) round(($item['total'] / $maxTotal) * 180));
+                    @endphp
+                    <div class="admin-chart-col">
+                        <div class="admin-chart-value">{{ $item['total'] }}</div>
+                        <div class="admin-chart-bar" style="height: {{ $height }}px;"></div>
+                        <div class="admin-chart-label">{{ $item['angkatan'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     </div>
 </div>
 @endsection
