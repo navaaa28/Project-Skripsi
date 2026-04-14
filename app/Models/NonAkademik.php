@@ -17,12 +17,18 @@ class NonAkademik extends Model
         'id_user',
         'id_guru',
         'id_kelas',
+        'id_tahun_ajaran',
         'semester',
         'sikap_belajar',
         'keaktifan',
         'minat_ekstrakurikuler',
         'catatan_guru',
     ];
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
+    }
 
     public function user()
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\GuruImport;
 use App\Models\Guru;
+use App\Models\Mapel;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,7 @@ class GuruController extends Controller
     {
         return view('guru.create', [
             'users' => User::where('role', 'guru')->orderBy('username')->get(),
+            'mapelOptions' => Mapel::orderBy('nama_mapel')->get(),
         ]);
     }
 
@@ -46,8 +48,11 @@ class GuruController extends Controller
             'id_user' => ['required', 'exists:users,id_user', 'unique:gurus,id_user'],
             'nip' => ['nullable', 'string', 'max:30', 'unique:gurus,nip'],
             'nama_guru' => ['required', 'string', 'max:100'],
-            'jenis_kelamin' => ['nullable', 'string', 'max:10'],
+            'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
             'mapel_utama' => ['nullable', 'string', 'max:50'],
+        ], [
+            'id_user.unique' => 'User guru sudah terdaftar.',
+            'nip.unique' => 'NIP sudah terdaftar, gunakan NIP lain.',
         ]);
 
         Guru::create($data);
@@ -65,6 +70,7 @@ class GuruController extends Controller
         return view('guru.edit', [
             'guru' => $guru,
             'users' => User::where('role', 'guru')->orderBy('username')->get(),
+            'mapelOptions' => Mapel::orderBy('nama_mapel')->get(),
         ]);
     }
 
@@ -74,8 +80,11 @@ class GuruController extends Controller
             'id_user' => ['required', 'exists:users,id_user', Rule::unique('gurus', 'id_user')->ignore($guru->id_user, 'id_user')],
             'nip' => ['nullable', 'string', 'max:30', Rule::unique('gurus', 'nip')->ignore($guru->id_user, 'id_user')],
             'nama_guru' => ['required', 'string', 'max:100'],
-            'jenis_kelamin' => ['nullable', 'string', 'max:10'],
+            'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
             'mapel_utama' => ['nullable', 'string', 'max:50'],
+        ], [
+            'id_user.unique' => 'User guru sudah dipakai oleh data guru lain.',
+            'nip.unique' => 'NIP sudah dipakai oleh data guru lain.',
         ]);
 
         $guru->update($data);

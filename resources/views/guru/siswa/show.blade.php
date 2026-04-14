@@ -104,6 +104,17 @@
                 @endforeach
             </select>
         </div>
+        <div class="filter-group">
+            <label for="tahun_ajaran">Tahun Ajaran</label>
+            <select name="tahun_ajaran" id="tahun_ajaran">
+                <option value="">Semua tahun ajaran</option>
+                @foreach ($tahunAjaranOptions as $ta)
+                    <option value="{{ $ta->id_tahun_ajaran }}" {{ (string) $selectedTahunAjaran === (string) $ta->id_tahun_ajaran ? 'selected' : '' }}>
+                        {{ $ta->nama_tahun_ajaran }} @if($ta->is_active) (Aktif) @endif
+                    </option>
+                @endforeach
+            </select>
+        </div>
         <div class="filter-actions">
             <button type="submit" class="btn-filter">Terapkan</button>
             <a href="{{ route('guru.siswa.show', $siswa) }}" class="btn-filter-reset">Reset</a>

@@ -51,9 +51,13 @@
     </div>
 </div>
 
+@php
+    $semesterAktifLabel = $activeTahunAjaran?->semester_aktif == 2 ? 'Genap' : 'Ganjil';
+@endphp
+
 <div class="info">
     Informasi Penting<br>
-    Periode Input Nilai Semester Ganjil Telah Dibuka!
+    Periode Input Nilai Semester {{ $semesterAktifLabel }} Telah Dibuka!
 </div>
 
 <form method="POST" action="{{ route('guru.penilaian.store') }}">
@@ -85,13 +89,13 @@
                     @endforeach
                 </select>
             </div>
-            <div class="field">
-                <label class="label">Semester</label>
-                <select name="semester" class="select" required>
-                    <option value="">Pilih Semester</option>
-                    <option value="1">1 (Ganjil)</option>
-                    <option value="2">2 (Genap)</option>
-                </select>
+            <div class="field" style="grid-column: span 2;">
+                <label class="label">Semester & Tahun Ajaran Aktif</label>
+                <div style="background:#f8fafc; color:#334155; padding: 10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-weight:600; font-size:13px;">
+                    Semester {{ $activeTahunAjaran?->semester_aktif == 1 ? '1 (Ganjil)' : '2 (Genap)' }} 
+                    — {{ $activeTahunAjaran?->nama_tahun_ajaran ?? 'Belum Diatur' }}
+                </div>
+                <input type="hidden" name="semester" id="hiddenSemester" value="{{ $activeTahunAjaran?->semester_aktif }}">
             </div>
         </div>
     </div>
@@ -160,6 +164,28 @@
             <div class="field" style="grid-column: 1 / -1;">
                 <label class="label">Catatan Guru</label>
                 <textarea name="catatan_guru" class="textarea" placeholder="Observasi singkat..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    {{-- Panel Kenaikan Kelas (hanya muncul saat semester 2) --}}
+    <div class="panel" id="panelKenaikan" style="display: none; border: 2px solid #fbbf24;">
+        <h3 style="color: #92400e;">📋 Keputusan Kenaikan Kelas</h3>
+        <div style="background: #fef3c7; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #92400e; margin-bottom: 12px;">
+            Semester 2 (Genap) = akhir tahun ajaran. Tentukan apakah siswa ini <strong>naik kelas</strong> atau <strong>tidak naik</strong>.
+        </div>
+        <div class="grid">
+            <div class="field">
+                <label class="label">Keputusan</label>
+                <select name="keputusan_kenaikan" class="select" id="keputusanKenaikan">
+                    <option value="">-- Pilih --</option>
+                    <option value="naik">✓ Naik Kelas</option>
+                    <option value="tidak_naik">✗ Tidak Naik Kelas</option>
+                </select>
+            </div>
+            <div class="field">
+                <label class="label">Catatan Kenaikan (opsional)</label>
+                <input type="text" name="catatan_kenaikan" class="input" placeholder="Alasan jika tidak naik, dll.">
             </div>
         </div>
     </div>
@@ -324,6 +350,22 @@ document.addEventListener('DOMContentLoaded', function () {
         kelasSelect.addEventListener('change', filterSiswaByKelas);
         filterSiswaByKelas();
     }
+
+    // Toggle panel Kenaikan Kelas saat semester = 2
+    const semesterInput = document.getElementById('hiddenSemester');
+    const panelKenaikan = document.getElementById('panelKenaikan');
+    const keputusanSelect = document.getElementById('keputusanKenaikan');
+
+    function toggleKenaikanPanel() {
+        if (!semesterInput || !panelKenaikan) return;
+        const isSem2 = semesterInput.value === '2';
+        panelKenaikan.style.display = isSem2 ? 'block' : 'none';
+        if (keputusanSelect) {
+            keputusanSelect.required = isSem2;
+        }
+    }
+
+    toggleKenaikanPanel();
 
     if (form) {
         form.addEventListener('submit', function () {

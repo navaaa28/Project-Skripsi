@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mapel;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MapelController extends Controller
 {
@@ -22,7 +23,7 @@ class MapelController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nama_mapel' => ['required', 'string', 'max:50'],
+            'nama_mapel' => ['required', 'string', 'max:50', 'unique:mapel,nama_mapel'],
             'kkm' => ['required', 'integer'],
         ]);
 
@@ -44,7 +45,7 @@ class MapelController extends Controller
     public function update(Request $request, Mapel $mapel)
     {
         $data = $request->validate([
-            'nama_mapel' => ['required', 'string', 'max:50'],
+            'nama_mapel' => ['required', 'string', 'max:50', Rule::unique('mapel', 'nama_mapel')->ignore($mapel->id_mapel, 'id_mapel')],
             'kkm' => ['required', 'integer'],
         ]);
 

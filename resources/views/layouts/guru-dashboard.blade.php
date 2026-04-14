@@ -55,6 +55,7 @@
                 <a class="{{ request()->routeIs('guru.penilaian.*') ? 'active' : '' }}" href="{{ route('guru.penilaian.index') }}">Kelola Penilaian</a>
                 <a class="{{ request()->routeIs('guru.siswa.*') ? 'active' : '' }}" href="{{ route('guru.siswa.index') }}">Data Siswa</a>
                 <a class="{{ request()->routeIs('guru.analisis.*') ? 'active' : '' }}" href="{{ route('guru.analisis.index') }}">Riwayat Analisis</a>
+                <a class="{{ request()->routeIs('guru.kenaikan-kelas.*') ? 'active' : '' }}" href="{{ route('guru.kenaikan-kelas.index') }}">Kenaikan Kelas</a>
                 <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="margin-top: 10px;">
                     @csrf
                     <button type="button" onclick="document.getElementById('logoutModal').style.display='flex'" style="width: 100%; text-align: left; background: none; border: none; color: #d1d5db; padding: 10px 12px; cursor: pointer;">

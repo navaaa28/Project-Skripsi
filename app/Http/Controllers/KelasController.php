@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kelas;
 use App\Models\Guru;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class KelasController extends Controller
 {
@@ -25,7 +26,7 @@ class KelasController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nama_kelas' => ['required', 'string', 'max:20'],
+            'nama_kelas' => ['required', 'string', 'max:20', 'unique:kelas,nama_kelas'],
             'id_guru' => ['nullable', 'exists:gurus,id_user'],
         ]);
 
@@ -50,7 +51,7 @@ class KelasController extends Controller
     public function update(Request $request, Kelas $kela)
     {
         $data = $request->validate([
-            'nama_kelas' => ['required', 'string', 'max:20'],
+            'nama_kelas' => ['required', 'string', 'max:20', Rule::unique('kelas', 'nama_kelas')->ignore($kela->id_kelas, 'id_kelas')],
             'id_guru' => ['nullable', 'exists:gurus,id_user'],
         ]);
 

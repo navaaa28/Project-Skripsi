@@ -7,6 +7,9 @@ use App\Http\Controllers\GuruDashboardController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\MapelController;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\TahunAjaranController;
+use App\Http\Controllers\KenaikanKelasController;
+use App\Http\Controllers\GuruKenaikanKelasController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MobileSiswaController;
@@ -30,6 +33,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('kelas', KelasController::class);
     Route::resource('mapel', MapelController::class);
     Route::resource('users', UserController::class);
+    Route::resource('tahun-ajaran', TahunAjaranController::class)->except(['show']);
+    Route::post('tahun-ajaran/{tahun_ajaran}/activate', [TahunAjaranController::class, 'activate'])->name('tahun-ajaran.activate');
+    Route::post('tahun-ajaran/{tahun_ajaran}/deactivate', [TahunAjaranController::class, 'deactivate'])->name('tahun-ajaran.deactivate');
+    Route::post('tahun-ajaran/{tahun_ajaran}/toggle-semester', [TahunAjaranController::class, 'toggleSemester'])->name('tahun-ajaran.toggle-semester');
+
+    // Kenaikan Kelas
+    Route::get('kenaikan-kelas', [KenaikanKelasController::class, 'index'])->name('kenaikan-kelas.index');
+    Route::post('kenaikan-kelas/process', [KenaikanKelasController::class, 'process'])->name('kenaikan-kelas.process');
 });
 
 Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(function () {
@@ -42,4 +53,8 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::get('/riwayat-analisis', [\App\Http\Controllers\GuruAnalisisController::class , 'index'])->name('analisis.index');
     Route::get('/siswa/{siswa}/dokumen', [\App\Http\Controllers\GuruSiswaController::class , 'dokumen'])->name('siswa.dokumen');
     Route::get('/siswa/{siswa}/dokumen/{dokumen}/download', [\App\Http\Controllers\GuruSiswaController::class , 'downloadDokumen'])->name('siswa.dokumen.download');
+
+    // Kenaikan Kelas
+    Route::get('/kenaikan-kelas', [GuruKenaikanKelasController::class, 'index'])->name('kenaikan-kelas.index');
+    Route::post('/kenaikan-kelas', [GuruKenaikanKelasController::class, 'store'])->name('kenaikan-kelas.store');
 });

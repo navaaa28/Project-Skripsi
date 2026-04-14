@@ -16,6 +16,7 @@ class Rekomendasi extends Model
     protected $fillable = [
         'id_user',
         'id_kelas',
+        'id_tahun_ajaran',
         'semester',
         'minat_utama',
         'bakat_potensial',
@@ -29,6 +30,11 @@ class Rekomendasi extends Model
         'saran_pengembangan',
         'tgl_analisis',
     ];
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
+    }
 
     protected $casts = [
         'minat_json' => 'array',

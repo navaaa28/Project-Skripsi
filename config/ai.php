@@ -1,8 +1,19 @@
 <?php
 
 return [
+    'primary_provider' => env('AI_PRIMARY_PROVIDER', 'gemini'),
+    'fallback_provider' => env('AI_FALLBACK_PROVIDER', 'groq'),
+
     'gemini_api_key' => env('GEMINI_API_KEY'),
     'gemini_model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+    'gemini_connect_timeout' => env('GEMINI_CONNECT_TIMEOUT', 10),
+    'gemini_timeout' => env('GEMINI_TIMEOUT', 30),
+
+    'groq_api_key' => env('GROQ_API_KEY'),
+    'groq_model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+    'groq_connect_timeout' => env('GROQ_CONNECT_TIMEOUT', 10),
+    'groq_timeout' => env('GROQ_TIMEOUT', 30),
+
     'system_prompt' => env('GEMINI_SYSTEM_PROMPT', <<<PROMPT
 Anda adalah seorang Psikolog Pendidikan dan Konselor Akademik ahli untuk tingkat Sekolah Dasar. Tugas Anda adalah menganalisis data nilai historis siswa untuk mengidentifikasi potensi minat dan bakat.
 Instruksi:

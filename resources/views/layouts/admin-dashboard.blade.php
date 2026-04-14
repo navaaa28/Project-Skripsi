@@ -85,6 +85,8 @@
                 <a class="{{ request()->routeIs('admin.kelas.*') ? 'active' : '' }}" href="{{ route('admin.kelas.index') }}">Kelas</a>
                 <a class="{{ request()->routeIs('admin.mapel.*') ? 'active' : '' }}" href="{{ route('admin.mapel.index') }}">Mapel</a>
                 <a class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Users</a>
+                <a class="{{ request()->routeIs('admin.tahun-ajaran.*') ? 'active' : '' }}" href="{{ route('admin.tahun-ajaran.index') }}">Tahun Ajaran</a>
+                <a class="{{ request()->routeIs('admin.kenaikan-kelas.*') ? 'active' : '' }}" href="{{ route('admin.kenaikan-kelas.index') }}">Kenaikan Kelas</a>
                 <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="margin-top: 10px;">
                     @csrf
                     <button type="button" onclick="document.getElementById('logoutModal').style.display='flex'" style="width: 100%; text-align: left; background: none; border: none; color: #d1d5db; padding: 10px 12px; cursor: pointer;">
@@ -94,6 +96,15 @@
             </nav>
         </aside>
         <main class="content">
+            @if ($errors->any())
+                <div style="margin-bottom: 12px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 12px; font-size: 12px;">
+                    <ul style="margin: 0; padding-left: 16px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             @yield('content')
         </main>
     </div>

@@ -8,6 +8,8 @@ use App\Models\Nilai;
 use App\Models\NonAkademik;
 use App\Models\Siswa;
 use App\Models\Rekomendasi;
+use App\Models\KenaikanKelas;
+use App\Models\TahunAjaran;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,11 +27,15 @@ class GuruPenilaianController extends Controller
             ? Siswa::whereIn('id_kelas', $kelasIds)->orderBy('nama_siswa')->get()
             : collect();
         $mapel = Mapel::orderBy('nama_mapel')->get();
+        $tahunAjarans = TahunAjaran::orderByDesc('id_tahun_ajaran')->get();
+        $activeTahunAjaran = TahunAjaran::getActive();
 
         return view('guru.penilaian.index', [
             'kelas' => $kelas,
             'siswas' => $siswas,
             'mapel' => $mapel,
+            'tahunAjarans' => $tahunAjarans,
+            'activeTahunAjaran' => $activeTahunAjaran,
         ]);
     }
 
@@ -38,9 +44,20 @@ class GuruPenilaianController extends Controller
         $guru = Auth::user()?->guru;
         abort_unless($guru, 403);
 
+        $activeTahunAjaran = TahunAjaran::getActive();
+        if (!$activeTahunAjaran) {
+            return back()->withErrors(['id_tahun_ajaran' => 'Tidak ada tahun ajaran aktif. Hubungi admin.']);
+        }
+
+        $request->merge([
+            'id_tahun_ajaran' => $activeTahunAjaran->id_tahun_ajaran,
+            'semester' => $activeTahunAjaran->semester_aktif,
+        ]);
+
         $data = $request->validate([
             'id_kelas' => ['required', 'exists:kelas,id_kelas'],
             'id_user' => ['required', 'exists:users,id_user'],
+            'id_tahun_ajaran' => ['required', 'exists:tahun_ajarans,id_tahun_ajaran'],
             'semester' => ['required', 'integer', 'min:1', 'max:2'],
             'nilai_tugas' => ['nullable', 'array'],
             'nilai_uts' => ['nullable', 'array'],
@@ -49,6 +66,8 @@ class GuruPenilaianController extends Controller
             'keaktifan' => ['nullable', 'integer', 'min:1', 'max:5'],
             'minat_ekstrakurikuler' => ['nullable', 'string', 'max:100'],
             'catatan_guru' => ['nullable', 'string'],
+            'keputusan_kenaikan' => ['required_if:semester,2', 'nullable', 'in:naik,tidak_naik'],
+            'catatan_kenaikan' => ['nullable', 'string', 'max:500'],
         ]);
 
         // Pastikan kelas milik guru
@@ -88,6 +107,7 @@ class GuruPenilaianController extends Controller
                     'id_user' => $data['id_user'],
                     'id_mapel' => $mapelId,
                     'id_kelas' => $data['id_kelas'],
+                    'id_tahun_ajaran' => $data['id_tahun_ajaran'],
                     'semester' => $data['semester'],
                 ],
                 [
@@ -110,6 +130,7 @@ class GuruPenilaianController extends Controller
                     'id_user' => $data['id_user'],
                     'id_guru' => $guru->id_user,
                     'id_kelas' => $data['id_kelas'],
+                    'id_tahun_ajaran' => $data['id_tahun_ajaran'],
                     'semester' => $data['semester'],
                 ],
                 [
@@ -121,7 +142,12 @@ class GuruPenilaianController extends Controller
             );
         }
 
-        $this->tryAnalyzeWithAI($data['id_user'], $data['id_kelas'], $data['semester']);
+        $this->tryAnalyzeWithAI($data['id_user'], $data['id_kelas'], $data['semester'], $data['id_tahun_ajaran']);
+
+        // Simpan keputusan kenaikan kelas jika semester 2
+        if ((int) $data['semester'] === 2 && !empty($data['keputusan_kenaikan'])) {
+            $this->saveKenaikanKelas($data, $guru);
+        }
 
         return back()->with('status', 'Penilaian berhasil disimpan.');
     }
@@ -138,7 +164,7 @@ class GuruPenilaianController extends Controller
         return $num;
     }
 
-    private function tryAnalyzeWithAI(int $idUser, int $idKelas, int $semester): void
+    private function tryAnalyzeWithAI(int $idUser, int $idKelas, int $semester, int $idTahunAjaran): void
     {
         $mapelCount = Mapel::count();
         if ($mapelCount === 0) {
@@ -147,6 +173,7 @@ class GuruPenilaianController extends Controller
 
         $nilaiCount = Nilai::where('id_user', $idUser)
             ->where('id_kelas', $idKelas)
+            ->where('id_tahun_ajaran', $idTahunAjaran)
             ->where('semester', $semester)
             ->whereNotNull('nilai_akhir')
             ->count();
@@ -197,6 +224,7 @@ class GuruPenilaianController extends Controller
             [
                 'id_user' => $idUser,
                 'id_kelas' => $idKelas,
+                'id_tahun_ajaran' => $idTahunAjaran,
                 'semester' => $semester,
             ],
             [
@@ -280,5 +308,42 @@ class GuruPenilaianController extends Controller
             'riwayat_akademik' => $riwayatAkademik,
             'riwayat_non_akademik' => $riwayatNonAkademik,
         ];
+    }
+
+    /**
+     * Simpan keputusan kenaikan kelas ke tabel kenaikan_kelas.
+     */
+    private function saveKenaikanKelas(array $data, $guru): void
+    {
+        $currentKelas = Kelas::find($data['id_kelas']);
+        if (!$currentKelas) return;
+
+        // Cari kelas tujuan (kelas selanjutnya)
+        $kelasTujuan = null;
+        preg_match('/(\d+)/', $currentKelas->nama_kelas, $matches);
+        if (!empty($matches[1])) {
+            $nextNumber = ((int) $matches[1]) + 1;
+            $kelasTujuan = Kelas::whereRaw("nama_kelas REGEXP ?", ["(^|[^0-9]){$nextNumber}([^0-9]|$)"])->first();
+        }
+
+        $status = $data['keputusan_kenaikan'];
+        if ($status === 'naik' && !$kelasTujuan) {
+            $status = 'lulus'; // Kelas tertinggi → lulus
+        }
+
+        KenaikanKelas::updateOrCreate(
+            [
+                'id_user' => $data['id_user'],
+                'id_tahun_ajaran' => $data['id_tahun_ajaran'],
+            ],
+            [
+                'id_kelas_asal' => $data['id_kelas'],
+                'id_kelas_tujuan' => ($status === 'naik') ? $kelasTujuan?->id_kelas : null,
+                'id_guru' => $guru->id_user,
+                'status' => $status,
+                'catatan' => $data['catatan_kenaikan'] ?? null,
+                'is_processed' => false,
+            ]
+        );
     }
 }

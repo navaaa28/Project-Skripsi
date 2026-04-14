@@ -5,31 +5,25 @@ namespace App\Http\Controllers;
 use App\Imports\SiswaImport;
 use App\Models\Siswa;
 use App\Models\User;
+use App\Services\SiswaService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SiswaController extends Controller
 {
+    public function __construct(
+        protected SiswaService $siswaService,
+    ) {}
     public function index(Request $request)
     {
-        $query = Siswa::with(['user', 'kelas'])->latest();
-
-        if ($request->filled('kelas')) {
-            $query->where('id_kelas', $request->string('kelas'));
-        }
-
-        if ($request->filled('q')) {
-            $q = $request->string('q');
-            $query->where(function ($sub) use ($q) {
-                $sub->where('nama_siswa', 'like', "%{$q}%")
-                    ->orWhere('nipd', 'like', "%{$q}%")
-                    ->orWhere('nisn', 'like', "%{$q}%");
-            });
-        }
+        $siswas = $this->siswaService->list(
+            $request->only(['kelas', 'q']),
+            10
+        )->appends($request->only(['kelas', 'q']));
 
         return view('siswa.index', [
-            'siswas' => $query->paginate(10)->appends($request->only(['kelas', 'q'])),
+            'siswas' => $siswas,
             'kelasOptions' => \App\Models\Kelas::orderBy('nama_kelas')->get(),
         ]);
     }
@@ -68,9 +62,13 @@ class SiswaController extends Controller
             'tgl_lahir' => ['nullable', 'date'],
             'rombel_saat_ini' => ['nullable', 'string', 'max:50'],
             'id_kelas' => ['nullable', 'exists:kelas,id_kelas'],
+        ], [
+            'id_user.unique' => 'User siswa sudah terdaftar.',
+            'nipd.unique' => 'NIPD sudah terdaftar, tidak boleh duplikat.',
+            'nisn.unique' => 'NISN sudah terdaftar, tidak boleh duplikat.',
         ]);
 
-        Siswa::create($data);
+        $this->siswaService->create($data);
 
         return redirect()->route('admin.siswa.index');
     }
@@ -100,16 +98,20 @@ class SiswaController extends Controller
             'tgl_lahir' => ['nullable', 'date'],
             'rombel_saat_ini' => ['nullable', 'string', 'max:50'],
             'id_kelas' => ['nullable', 'exists:kelas,id_kelas'],
+        ], [
+            'id_user.unique' => 'User siswa sudah dipakai oleh data siswa lain.',
+            'nipd.unique' => 'NIPD sudah dipakai oleh data siswa lain.',
+            'nisn.unique' => 'NISN sudah dipakai oleh data siswa lain.',
         ]);
 
-        $siswa->update($data);
+        $this->siswaService->update($siswa, $data);
 
         return redirect()->route('admin.siswa.index');
     }
 
     public function destroy(Siswa $siswa)
     {
-        $siswa->delete();
+        $this->siswaService->delete($siswa);
 
         return redirect()->route('admin.siswa.index');
     }

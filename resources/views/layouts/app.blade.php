@@ -27,6 +27,7 @@
                                 <a href="{{ route('admin.kelas.index') }}">Kelas</a>
                                 <a href="{{ route('admin.mapel.index') }}">Mapel</a>
                                 <a href="{{ route('admin.users.index') }}">Users</a>
+                                <a href="{{ route('admin.tahun-ajaran.index') }}">Tahun Ajaran</a>
                             @elseif (auth()->user()->role === 'guru')
                                 <a href="{{ route('guru.dashboard') }}">Dashboard Guru</a>
                             @endif

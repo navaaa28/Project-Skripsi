@@ -7,6 +7,7 @@ use App\Models\Nilai;
 use App\Models\Rekomendasi;
 use App\Models\DokumenSiswa;
 use App\Models\Kelas;
+use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -68,6 +69,14 @@ class GuruSiswaController extends Controller
             }
         }
 
+        $selectedTahunAjaran = null;
+        if ($request->filled('tahun_ajaran')) {
+            $taId = (int) $request->input('tahun_ajaran');
+            if ($taId > 0) {
+                $selectedTahunAjaran = $taId;
+            }
+        }
+
         $nilaiBase = Nilai::where('id_user', $siswa->id_user)
             ->whereIn('id_kelas', $kelasIds);
 
@@ -75,8 +84,12 @@ class GuruSiswaController extends Controller
             $nilaiBase->where('id_kelas', $selectedKelas);
         }
 
+        if ($selectedTahunAjaran !== null) {
+            $nilaiBase->where('id_tahun_ajaran', $selectedTahunAjaran);
+        }
+
         $nilai = (clone $nilaiBase)
-            ->with('mapel')
+            ->with(['mapel', 'tahunAjaran'])
             ->when($selectedSemester !== null, fn ($q) => $q->where('semester', $selectedSemester))
             ->orderBy('semester')
             ->orderBy('id_mapel')
@@ -125,9 +138,12 @@ class GuruSiswaController extends Controller
             ->whereIn('id_kelas', $kelasIds)
             ->when($selectedKelas !== null, fn ($q) => $q->where('id_kelas', $selectedKelas))
             ->when($selectedSemester !== null, fn ($q) => $q->where('semester', $selectedSemester))
+            ->when($selectedTahunAjaran !== null, fn ($q) => $q->where('id_tahun_ajaran', $selectedTahunAjaran))
             ->orderByDesc('semester')
             ->orderByDesc('tgl_analisis')
             ->first();
+
+        $tahunAjaranOptions = TahunAjaran::orderByDesc('id_tahun_ajaran')->get();
 
         return view('guru.siswa.show', [
             'siswa' => $siswa->load('kelas'),
@@ -137,6 +153,8 @@ class GuruSiswaController extends Controller
             'semesterOptions' => $semesterOptions,
             'selectedKelas' => $selectedKelas,
             'selectedSemester' => $selectedSemester,
+            'tahunAjaranOptions' => $tahunAjaranOptions,
+            'selectedTahunAjaran' => $selectedTahunAjaran,
         ]);
     }
 

@@ -5,17 +5,39 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Nilai;
 use App\Models\Rekomendasi;
+use App\Models\TahunAjaran;
+use App\Services\SiswaService;
+use App\Services\NilaiService;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class MobileSiswaController extends Controller
 {
+    public function __construct(
+        protected SiswaService $siswaService,
+        protected NilaiService $nilaiService,
+    ) {}
+
     public function me(Request $request)
     {
         $user = $request->user();
         $siswa = $user->siswa?->load('kelas.waliGuru');
+        $activeTa = TahunAjaran::getActive();
+
+        $kenaikan = null;
+        if ($siswa && $activeTa) {
+            $kenaikan = \App\Models\KenaikanKelas::with('kelasTujuan')
+                ->where('id_user', $user->id_user)
+                ->where('id_tahun_ajaran', $activeTa->id_tahun_ajaran)
+                ->orderByDesc('created_at')
+                ->first();
+        }
 
         return response()->json([
+            'sistem' => [
+                'tahun_ajaran_aktif' => $activeTa?->nama_tahun_ajaran,
+                'semester_aktif' => $activeTa?->semester_aktif,
+            ],
             'user' => [
                 'id_user' => $user->id_user,
                 'username' => $user->username,
@@ -26,6 +48,9 @@ class MobileSiswaController extends Controller
                 'nama_siswa' => $siswa->nama_siswa,
                 'nipd' => $siswa->nipd,
                 'nisn' => $siswa->nisn,
+                'jenis_kelamin' => $siswa->jenis_kelamin,
+                'tempat_lahir' => $siswa->tempat_lahir,
+                'tgl_lahir' => $siswa->tgl_lahir?->toDateString(),
                 'rombel_saat_ini' => $siswa->rombel_saat_ini,
                 'kelas' => $siswa->kelas?->nama_kelas,
                 'wali_kelas' => $siswa->kelas?->waliGuru ? [
@@ -33,7 +58,47 @@ class MobileSiswaController extends Controller
                     'nama_guru' => $siswa->kelas->waliGuru->nama_guru,
                     'nip' => $siswa->kelas->waliGuru->nip,
                 ] : null,
+                'kenaikan_kelas' => $kenaikan ? [
+                    'status' => $kenaikan->status, // 'naik', 'tidak_naik', 'lulus'
+                    'kelas_tujuan' => $kenaikan->kelasTujuan?->nama_kelas,
+                    'catatan' => $kenaikan->catatan,
+                ] : null,
             ] : null,
+        ]);
+    }
+
+    /**
+     * Update profil siswa (PUT /api/mobile/profil).
+     */
+    public function updateProfil(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'nama_siswa' => ['sometimes', 'string', 'max:100'],
+            'jenis_kelamin' => ['sometimes', 'nullable', 'string', 'max:10'],
+            'tempat_lahir' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'tgl_lahir' => ['sometimes', 'nullable', 'date'],
+        ]);
+
+        $siswa = $this->siswaService->updateProfil($user->id_user, $data);
+
+        if (!$siswa) {
+            return response()->json(['message' => 'Data siswa tidak ditemukan.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'siswa' => [
+                'id_user' => $siswa->id_user,
+                'nama_siswa' => $siswa->nama_siswa,
+                'jenis_kelamin' => $siswa->jenis_kelamin,
+                'tempat_lahir' => $siswa->tempat_lahir,
+                'tgl_lahir' => $siswa->tgl_lahir?->toDateString(),
+                'nipd' => $siswa->nipd,
+                'nisn' => $siswa->nisn,
+                'rombel_saat_ini' => $siswa->rombel_saat_ini,
+            ],
         ]);
     }
 
@@ -41,21 +106,20 @@ class MobileSiswaController extends Controller
     {
         $user = $request->user();
         $semester = $request->integer('semester');
+        $idTahunAjaran = $request->integer('tahun_ajaran');
 
-        $query = Nilai::with(['mapel', 'kelas'])
-            ->where('id_user', $user->id_user)
-            ->orderBy('semester')
-            ->orderBy('id_mapel');
+        $rows = $this->nilaiService->getNilaiForSiswa(
+            $user->id_user,
+            $semester ?: null,
+            $idTahunAjaran ?: null
+        );
 
-        if ($semester) {
-            $query->where('semester', $semester);
-        }
-
-        $rows = $query->get()->map(function ($n) {
+        $mapped = $rows->map(function ($n) {
             return [
                 'semester' => $n->semester,
                 'mapel' => $n->mapel?->nama_mapel,
                 'kelas' => $n->kelas?->nama_kelas,
+                'tahun_ajaran' => $n->tahunAjaran?->nama_tahun_ajaran,
                 'nilai_tugas' => $n->nilai_tugas,
                 'nilai_uts' => $n->nilai_uts,
                 'nilai_uas' => $n->nilai_uas,
@@ -65,7 +129,7 @@ class MobileSiswaController extends Controller
 
         return response()->json([
             'semester' => $semester,
-            'nilai' => $rows,
+            'nilai' => $mapped,
         ]);
     }
 
@@ -75,7 +139,7 @@ class MobileSiswaController extends Controller
         $semester = $request->integer('semester');
         $kelas = $request->input('kelas');
 
-        $query = Rekomendasi::with('kelas')
+        $query = Rekomendasi::with(['kelas', 'tahunAjaran'])
             ->where('id_user', $user->id_user)
             ->orderByDesc('semester')
             ->orderByDesc('tgl_analisis');
@@ -106,7 +170,8 @@ class MobileSiswaController extends Controller
             ],
             'rekomendasi' => [
                 'id_kelas' => $rek->id_kelas,
-                'kelas' => $rek->kelas?->nama_kelas,
+                'kelas' => optional($rek->kelas)->nama_kelas,
+                'tahun_ajaran' => optional($rek->tahunAjaran)->nama_tahun_ajaran,
                 'semester' => $rek->semester,
                 'minat_utama' => $rek->minat_utama,
                 'bakat_potensial' => $rek->bakat_potensial,

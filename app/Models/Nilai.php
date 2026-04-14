@@ -17,12 +17,18 @@ class Nilai extends Model
         'id_user',
         'id_mapel',
         'id_kelas',
+        'id_tahun_ajaran',
         'semester',
         'nilai_tugas',
         'nilai_uts',
         'nilai_uas',
         'nilai_akhir',
     ];
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
+    }
 
     public function user()
     {
