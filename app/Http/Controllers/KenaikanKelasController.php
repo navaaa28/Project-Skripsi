@@ -34,15 +34,13 @@ class KenaikanKelasController extends Controller
     {
         $tahunAjaranAktif = TahunAjaran::getActive();
         $tahunAjaranProses = $this->resolveProcessingTahunAjaran();
+        $kelasNumberOrder = DB::connection()->getDriverName() === 'pgsql'
+            ? "CASE WHEN nama_kelas ~ '[0-9]+' THEN CAST(substring(nama_kelas from '[0-9]+') AS INTEGER) ELSE 999 END ASC"
+            : "CASE WHEN nama_kelas REGEXP '[0-9]+' THEN CAST(REGEXP_SUBSTR(nama_kelas, '[0-9]+') AS UNSIGNED) ELSE 999 END ASC";
 
         $kelasList = Kelas::with('waliGuru')
             ->withCount('siswas')
-            ->orderByRaw("
-                CASE
-                    WHEN nama_kelas REGEXP '[0-9]+' THEN CAST(REGEXP_SUBSTR(nama_kelas, '[0-9]+') AS UNSIGNED)
-                    ELSE 999
-                END ASC
-            ")
+            ->orderByRaw($kelasNumberOrder)
             ->get();
 
         // Ambil data keputusan guru per kelas

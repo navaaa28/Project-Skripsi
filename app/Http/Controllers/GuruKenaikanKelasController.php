@@ -124,7 +124,7 @@ class GuruKenaikanKelasController extends Controller
         $nextNumber = ((int) $matches[1]) + 1;
 
         return Kelas::where('nama_kelas', 'LIKE', "%{$nextNumber}%")
-            ->whereRaw("nama_kelas REGEXP ?", ["(^|[^0-9]){$nextNumber}([^0-9]|$)"])
-            ->first();
+            ->get()
+            ->first(fn (Kelas $kelas) => preg_match("/(^|[^0-9]){$nextNumber}([^0-9]|$)/", $kelas->nama_kelas));
     }
 }

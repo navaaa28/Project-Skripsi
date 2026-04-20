@@ -323,7 +323,9 @@ class GuruPenilaianController extends Controller
         preg_match('/(\d+)/', $currentKelas->nama_kelas, $matches);
         if (!empty($matches[1])) {
             $nextNumber = ((int) $matches[1]) + 1;
-            $kelasTujuan = Kelas::whereRaw("nama_kelas REGEXP ?", ["(^|[^0-9]){$nextNumber}([^0-9]|$)"])->first();
+            $kelasTujuan = Kelas::where('nama_kelas', 'LIKE', "%{$nextNumber}%")
+                ->get()
+                ->first(fn (Kelas $kelas) => preg_match("/(^|[^0-9]){$nextNumber}([^0-9]|$)/", $kelas->nama_kelas));
         }
 
         $status = $data['keputusan_kenaikan'];

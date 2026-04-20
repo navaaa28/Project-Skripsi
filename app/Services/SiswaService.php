@@ -6,6 +6,7 @@ use App\Models\Siswa;
 use App\Models\User;
 use App\Models\Kelas;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,15 +18,14 @@ class SiswaService
      */
     public function list(array $filters = [], int $perPage = 10): LengthAwarePaginator
     {
+        $kelasNumberOrder = DB::connection()->getDriverName() === 'pgsql'
+            ? "CASE WHEN kelas.nama_kelas ~ '[0-9]+' THEN CAST(substring(kelas.nama_kelas from '[0-9]+') AS INTEGER) ELSE 999 END ASC"
+            : "CASE WHEN kelas.nama_kelas REGEXP '[0-9]+' THEN CAST(REGEXP_SUBSTR(kelas.nama_kelas, '[0-9]+') AS UNSIGNED) ELSE 999 END ASC";
+
         $query = Siswa::with(['user', 'kelas'])
             ->leftJoin('kelas', 'siswas.id_kelas', '=', 'kelas.id_kelas')
             ->select('siswas.*')
-            ->orderByRaw("
-                CASE
-                    WHEN kelas.nama_kelas REGEXP '[0-9]+' THEN CAST(REGEXP_SUBSTR(kelas.nama_kelas, '[0-9]+') AS UNSIGNED)
-                    ELSE 999
-                END ASC
-            ")
+            ->orderByRaw($kelasNumberOrder)
             ->orderBy('kelas.nama_kelas')
             ->orderBy('siswas.nama_siswa');
 
