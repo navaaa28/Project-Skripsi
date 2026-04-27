@@ -49,7 +49,7 @@
 
 <div class="info">
     Informasi Penting<br>
-    Periode Input Nilai Semester {{ $semesterAktifLabel }} Telah Dibuka!
+    Periode Input Nilai Semester Genap Telah Dibuka!
 </div>
 
 <div class="section-title">Daftar Kelas Anda</div>
