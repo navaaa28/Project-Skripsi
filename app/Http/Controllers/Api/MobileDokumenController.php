@@ -12,7 +12,8 @@ class MobileDokumenController extends Controller
 {
     public function __construct(
         protected DokumenService $dokumenService,
-    ) {}
+    ) {
+    }
 
     /**
      * List dokumen milik siswa yang login.

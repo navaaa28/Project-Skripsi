@@ -90,7 +90,7 @@ class GuruSiswaController extends Controller
 
         $nilai = (clone $nilaiBase)
             ->with(['mapel', 'tahunAjaran'])
-            ->when($selectedSemester !== null, fn ($q) => $q->where('semester', $selectedSemester))
+            ->when($selectedSemester !== null, fn($q) => $q->where('semester', $selectedSemester))
             ->orderBy('semester')
             ->orderBy('id_mapel')
             ->get();
@@ -102,7 +102,7 @@ class GuruSiswaController extends Controller
 
         $rekomSemesters = Rekomendasi::where('id_user', $siswa->id_user)
             ->whereIn('id_kelas', $kelasIds)
-            ->when($selectedKelas !== null, fn ($q) => $q->where('id_kelas', $selectedKelas))
+            ->when($selectedKelas !== null, fn($q) => $q->where('id_kelas', $selectedKelas))
             ->select('semester')
             ->distinct()
             ->pluck('semester');
@@ -136,9 +136,9 @@ class GuruSiswaController extends Controller
 
         $rekomendasi = Rekomendasi::where('id_user', $siswa->id_user)
             ->whereIn('id_kelas', $kelasIds)
-            ->when($selectedKelas !== null, fn ($q) => $q->where('id_kelas', $selectedKelas))
-            ->when($selectedSemester !== null, fn ($q) => $q->where('semester', $selectedSemester))
-            ->when($selectedTahunAjaran !== null, fn ($q) => $q->where('id_tahun_ajaran', $selectedTahunAjaran))
+            ->when($selectedKelas !== null, fn($q) => $q->where('id_kelas', $selectedKelas))
+            ->when($selectedSemester !== null, fn($q) => $q->where('semester', $selectedSemester))
+            ->when($selectedTahunAjaran !== null, fn($q) => $q->where('id_tahun_ajaran', $selectedTahunAjaran))
             ->orderByDesc('semester')
             ->orderByDesc('tgl_analisis')
             ->first();
@@ -172,7 +172,7 @@ class GuruSiswaController extends Controller
             ->get();
 
         return view('guru.siswa.dokumen', [
-            'siswa'   => $siswa->load('kelas'),
+            'siswa' => $siswa->load('kelas'),
             'dokumen' => $dokumen,
         ]);
     }
