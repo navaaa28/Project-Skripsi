@@ -132,19 +132,32 @@
                 <tr>
                     <th>Semester</th>
                     <th>Mapel</th>
+                    <th style="width:80px;">KKM</th>
                     <th>Nilai Akhir</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($nilai as $n)
-                    <tr>
+                    @php
+                        $kkm = $n->mapel?->kkm ?? 75;
+                        $belowKkm = $n->nilai_akhir !== null && $n->nilai_akhir < $kkm;
+                    @endphp
+                    <tr class="{{ $belowKkm ? 'row-below-kkm' : '' }}">
                         <td>{{ $n->semester }}</td>
                         <td>{{ $n->mapel?->nama_mapel ?? '-' }}</td>
-                        <td>{{ $n->nilai_akhir !== null ? number_format($n->nilai_akhir, 1) : '-' }}</td>
+                        <td style="color:#6b7280;">{{ $kkm }}</td>
+                        <td>
+                            <span class="nilai-num {{ $belowKkm ? 'nilai-below' : 'nilai-ok' }}">
+                                {{ $n->nilai_akhir !== null ? number_format($n->nilai_akhir, 1) : '-' }}
+                            </span>
+                            @if ($belowKkm)
+                                <span class="badge-kkm">Di bawah KKM</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3">Belum ada nilai.</td>
+                        <td colspan="4">Belum ada nilai.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -255,6 +268,26 @@
 </div>
 
 <style>
+    /* ---- KKM Indicators ---- */
+    .row-below-kkm { background: #fff5f5; }
+    .row-below-kkm:hover { background: #fee2e2 !important; }
+    .nilai-num { font-weight: 700; }
+    .nilai-below { color: #dc2626; }
+    .nilai-ok { color: #16a34a; }
+    .badge-kkm {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fca5a5;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
     /* ---- Hasil Analisis ---- */
     .hasil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     .hasil-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; background: #fafafa; }
@@ -439,11 +472,26 @@
             chart.update();
         }
 
+        const kkmValue = 75; // KKM default
+        const kkmDataset = {
+            label: 'KKM (75)',
+            data: labels.map(() => kkmValue),
+            borderColor: '#ef4444',
+            backgroundColor: 'transparent',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            tension: 0,
+            spanGaps: true,
+            originalColor: '#ef4444',
+        };
+
         const ctx = document.getElementById('nilaiChart');
         if (!ctx) return;
         const chart = new Chart(ctx, {
             type: 'line',
-            data: { labels: labels.map(s => `Semester ${s}`), datasets },
+            data: { labels: labels.map(s => `Semester ${s}`), datasets: [...datasets, kkmDataset] },
             options: {
                 responsive: true,
                 interaction: { mode: 'nearest', intersect: false },
@@ -454,12 +502,14 @@
                             usePointStyle: true,
                             pointStyle: 'line',
                             boxWidth: 18,
-                            font: { size: 11 }
+                            font: { size: 11 },
+                            filter: (item) => item.text !== 'KKM (75)' || true,
                         }
                     },
                     tooltip: {
                         callbacks: {
                             afterLabel: function (context) {
+                                if (context.dataset.label === 'KKM (75)') return '';
                                 const dataset = context.dataset;
                                 const { first, last } = pickFirstLast(dataset.data);
                                 if (first === null || last === null || labels.length < 2) return '';
@@ -473,7 +523,8 @@
                     y: {
                         min: yMin,
                         max: yMax,
-                        ticks: { stepSize: 5 }
+                        ticks: { stepSize: 5 },
+                        grid: { color: '#f1f5f9' }
                     }
                 }
             }

@@ -42,14 +42,27 @@ class SiswaImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 continue;
             }
 
+            // ── Cek duplikasi berlapis ─────────────────────────────────────
+            // 1. Cek berdasarkan NIPD (jika ada)
             if ($nipd !== '' && Siswa::where('nipd', $nipd)->exists()) {
-                $this->errors[] = "Baris {$line}: NIPD sudah terdaftar ({$nipd}).";
+                $this->errors[] = "Baris {$line}: NIPD {$nipd} sudah terdaftar — siswa dilewati.";
                 continue;
             }
+
+            // 2. Cek berdasarkan NISN (jika ada)
             if ($nisn !== '' && Siswa::where('nisn', $nisn)->exists()) {
-                $this->errors[] = "Baris {$line}: NISN sudah terdaftar ({$nisn}).";
+                $this->errors[] = "Baris {$line}: NISN {$nisn} sudah terdaftar — siswa dilewati.";
                 continue;
             }
+
+            // 3. Fallback: cek berdasarkan nama + tanggal lahir (untuk kasus NIPD/NISN kosong)
+            $namaExact = $nama;
+            $tglStr    = $tglLahir->toDateString();
+            if (Siswa::where('nama_siswa', $namaExact)->where('tgl_lahir', $tglStr)->exists()) {
+                $this->errors[] = "Baris {$line}: Siswa '{$nama}' (lahir {$tglStr}) sudah terdaftar — siswa dilewati.";
+                continue;
+            }
+            // ──────────────────────────────────────────────────────────────
 
             $username = $this->generateUsername($nama);
             $password = $tglLahir->format('dmY');
@@ -57,30 +70,30 @@ class SiswaImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             DB::transaction(function () use ($username, $password, $nama, $nipd, $nisn, $jk, $tempatLahir, $tglLahir, $rombel) {
                 $user = User::create([
                     'username' => $username,
-                    'email' => null,
+                    'email'    => null,
                     'password' => Hash::make($password),
-                    'role' => 'siswa',
+                    'role'     => 'siswa',
                 ]);
 
                 $kelasId = null;
                 if ($rombel !== '') {
                     $kelas = \App\Models\Kelas::firstOrCreate(
                         ['nama_kelas' => $rombel],
-                        ['id_guru' => null]
+                        ['id_guru'    => null]
                     );
                     $kelasId = $kelas->id_kelas;
                 }
 
                 Siswa::create([
-                    'id_user' => $user->id_user,
-                    'nipd' => $nipd !== '' ? $nipd : null,
-                    'nisn' => $nisn !== '' ? $nisn : null,
-                    'nama_siswa' => $nama,
+                    'id_user'       => $user->id_user,
+                    'nipd'          => $nipd !== '' ? $nipd : null,
+                    'nisn'          => $nisn !== '' ? $nisn : null,
+                    'nama_siswa'    => $nama,
                     'jenis_kelamin' => $jk !== '' ? $jk : null,
-                    'tempat_lahir' => $tempatLahir !== '' ? $tempatLahir : null,
-                    'tgl_lahir' => $tglLahir->toDateString(),
+                    'tempat_lahir'  => $tempatLahir !== '' ? $tempatLahir : null,
+                    'tgl_lahir'     => $tglLahir->toDateString(),
                     'rombel_saat_ini' => $rombel !== '' ? $rombel : null,
-                    'id_kelas' => $kelasId,
+                    'id_kelas'      => $kelasId,
                 ]);
             });
 
