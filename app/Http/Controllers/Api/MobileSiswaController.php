@@ -120,6 +120,8 @@ class MobileSiswaController extends Controller
                 'mapel' => $n->mapel?->nama_mapel,
                 'kelas' => $n->kelas?->nama_kelas,
                 'tahun_ajaran' => $n->tahunAjaran?->nama_tahun_ajaran,
+                'nilai_uh' => $n->nilai_uh,
+                'detail_uh' => $n->detail_uh,
                 'nilai_tugas' => $n->nilai_tugas,
                 'nilai_uts' => $n->nilai_uts,
                 'nilai_uas' => $n->nilai_uas,
@@ -180,6 +182,7 @@ class MobileSiswaController extends Controller
                 'analisis_tren' => $rek->analisis_tren,
                 'ringkasan_non_akademik' => $rek->ringkasan_non_akademik,
                 'saran_pengembangan' => $rek->saran_pengembangan,
+                'tips_peningkatan' => $rek->tips_peningkatan,
                 'tgl_analisis' => $rek->tgl_analisis,
             ],
         ]);

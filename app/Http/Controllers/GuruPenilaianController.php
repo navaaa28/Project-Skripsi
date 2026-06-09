@@ -59,6 +59,7 @@ class GuruPenilaianController extends Controller
             'id_user' => ['required', 'exists:users,id_user'],
             'id_tahun_ajaran' => ['required', 'exists:tahun_ajarans,id_tahun_ajaran'],
             'semester' => ['required', 'integer', 'min:1', 'max:2'],
+            'nilai_uh' => ['nullable', 'array'],
             'nilai_tugas' => ['nullable', 'array'],
             'nilai_uts' => ['nullable', 'array'],
             'nilai_uas' => ['nullable', 'array'],
@@ -80,27 +81,55 @@ class GuruPenilaianController extends Controller
             return back()->withErrors(['id_user' => 'Siswa tidak berada di kelas yang dipilih.']);
         }
 
+        $uh = $request->input('nilai_uh', []);
         $tugas = $request->input('nilai_tugas', []);
         $uts = $request->input('nilai_uts', []);
         $uas = $request->input('nilai_uas', []);
 
         $mapelIds = collect(array_merge(
+            array_keys($uh),
             array_keys($tugas),
             array_keys($uts),
             array_keys($uas)
         ))->unique()->filter();
 
+        // Bobot persentase: UH 25%, Tugas 25%, UTS 25%, UAS 25%
+        $weights = [
+            'uh'    => 25,
+            'tugas' => 25,
+            'uts'   => 25,
+            'uas'   => 25,
+        ];
+
         foreach ($mapelIds as $mapelId) {
+            $uhData = $this->parseUhScores($uh[$mapelId] ?? null);
+            $nilaiUh = $uhData['average'];
+            $detailUh = $uhData['details'];
+            
             $nilaiTugas = $this->normalizeNilai($tugas[$mapelId] ?? null);
             $nilaiUts = $this->normalizeNilai($uts[$mapelId] ?? null);
             $nilaiUas = $this->normalizeNilai($uas[$mapelId] ?? null);
 
-            if ($nilaiTugas === null && $nilaiUts === null && $nilaiUas === null) {
+            if ($nilaiUh === null && $nilaiTugas === null && $nilaiUts === null && $nilaiUas === null) {
                 continue;
             }
 
-            $nilaiParts = array_filter([$nilaiTugas, $nilaiUts, $nilaiUas], fn ($v) => $v !== null);
-            $nilaiAkhir = count($nilaiParts) ? array_sum($nilaiParts) / count($nilaiParts) : null;
+            // Hitung nilai akhir berbobot (redistribusi proporsional jika ada komponen kosong)
+            $components = [
+                'uh'    => $nilaiUh,
+                'tugas' => $nilaiTugas,
+                'uts'   => $nilaiUts,
+                'uas'   => $nilaiUas,
+            ];
+            $totalWeight = 0;
+            $weightedSum = 0;
+            foreach ($components as $key => $value) {
+                if ($value !== null) {
+                    $totalWeight += $weights[$key];
+                    $weightedSum += $value * $weights[$key];
+                }
+            }
+            $nilaiAkhir = $totalWeight > 0 ? $weightedSum / $totalWeight : null;
 
             Nilai::updateOrCreate(
                 [
@@ -111,6 +140,8 @@ class GuruPenilaianController extends Controller
                     'semester' => $data['semester'],
                 ],
                 [
+                    'nilai_uh' => $nilaiUh,
+                    'detail_uh' => $detailUh,
                     'nilai_tugas' => $nilaiTugas,
                     'nilai_uts' => $nilaiUts,
                     'nilai_uas' => $nilaiUas,
@@ -150,6 +181,79 @@ class GuruPenilaianController extends Controller
         }
 
         return back()->with('status', 'Penilaian berhasil disimpan.');
+    }
+
+    public function getNilaiSiswa($id_user)
+    {
+        $guru = Auth::user()?->guru;
+        abort_unless($guru, 403);
+
+        $activeTahunAjaran = TahunAjaran::getActive();
+        if (!$activeTahunAjaran) {
+            return response()->json(['error' => 'Tidak ada tahun ajaran aktif.'], 400);
+        }
+
+        $semester = $activeTahunAjaran->semester_aktif;
+        $id_tahun_ajaran = $activeTahunAjaran->id_tahun_ajaran;
+
+        $nilais = Nilai::where('id_user', $id_user)
+            ->where('id_tahun_ajaran', $id_tahun_ajaran)
+            ->where('semester', $semester)
+            ->get();
+
+        $nonAkademik = NonAkademik::where('id_user', $id_user)
+            ->where('id_tahun_ajaran', $id_tahun_ajaran)
+            ->where('semester', $semester)
+            ->first();
+
+        $mapel_data = [];
+        foreach ($nilais as $n) {
+            $uhValue = '';
+            if (!empty($n->detail_uh)) {
+                $uhValue = implode(', ', $n->detail_uh);
+            } elseif ($n->nilai_uh !== null) {
+                $uhValue = $n->nilai_uh;
+            }
+
+            $mapel_data[$n->id_mapel] = [
+                'nilai_uh' => $uhValue,
+                'nilai_tugas' => $n->nilai_tugas,
+                'nilai_uts' => $n->nilai_uts,
+                'nilai_uas' => $n->nilai_uas,
+            ];
+        }
+
+        return response()->json([
+            'nilai' => $mapel_data,
+            'non_akademik' => $nonAkademik,
+        ]);
+    }
+
+    private function parseUhScores(mixed $value): array
+    {
+        if ($value === null || trim((string)$value) === '') {
+            return ['average' => null, 'details' => null];
+        }
+
+        $parts = explode(',', (string)$value);
+        $validScores = [];
+        
+        foreach ($parts as $p) {
+            $num = $this->normalizeNilai(trim($p));
+            if ($num !== null) {
+                $validScores[] = $num;
+            }
+        }
+
+        if (count($validScores) === 0) {
+            return ['average' => null, 'details' => null];
+        }
+
+        $average = array_sum($validScores) / count($validScores);
+        return [
+            'average' => $average,
+            'details' => $validScores
+        ];
     }
 
     private function normalizeNilai(mixed $value): ?float
@@ -239,6 +343,7 @@ class GuruPenilaianController extends Controller
                 'analisis_tren' => data_get($result, 'analisis_tren'),
                 'ringkasan_non_akademik' => data_get($result, 'ringkasan_non_akademik'),
                 'saran_pengembangan' => data_get($result, 'saran_pengembangan'),
+                'tips_peningkatan' => data_get($result, 'tips_peningkatan'),
                 'tgl_analisis' => now()->toDateString(),
             ]
         );
@@ -276,7 +381,15 @@ class GuruPenilaianController extends Controller
             $mapel = [];
             foreach ($rows as $row) {
                 if ($row->mapel && $row->nilai_akhir !== null) {
-                    $mapel[$row->mapel->nama_mapel] = $row->nilai_akhir;
+                    $mapel[$row->mapel->nama_mapel] = [
+                        'nilai_uh' => $row->nilai_uh !== null ? round($row->nilai_uh, 1) : null,
+                        'detail_uh' => $row->detail_uh,
+                        'nilai_tugas' => $row->nilai_tugas !== null ? round($row->nilai_tugas, 1) : null,
+                        'nilai_uts' => $row->nilai_uts !== null ? round($row->nilai_uts, 1) : null,
+                        'nilai_uas' => $row->nilai_uas !== null ? round($row->nilai_uas, 1) : null,
+                        'nilai_akhir' => round($row->nilai_akhir, 1),
+                        'kkm' => $row->mapel->kkm ?? 75,
+                    ];
                 }
             }
             $riwayatAkademik[] = [

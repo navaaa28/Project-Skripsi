@@ -218,7 +218,7 @@ class GeminiService
 
     private function hasRequiredKeys(array $decoded): bool
     {
-        foreach (['minat', 'bakat', 'analisis_tren', 'ringkasan_non_akademik', 'saran_pengembangan'] as $key) {
+        foreach (['minat', 'bakat', 'analisis_tren', 'ringkasan_non_akademik', 'saran_pengembangan', 'tips_peningkatan'] as $key) {
             if (!array_key_exists($key, $decoded)) {
                 return false;
             }

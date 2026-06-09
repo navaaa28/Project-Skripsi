@@ -20,10 +20,16 @@ class GuruSiswaController extends Controller
         $kelasOptions = $guru ? $guru->kelasWali()->orderBy('nama_kelas')->get() : collect();
         $kelasIds = $kelasOptions->pluck('id_kelas');
 
+        // Auto-select first kelas if guru has classes and none is chosen yet
+        $selectedKelas = $request->input('kelas');
+        if (!$request->filled('kelas') && !$request->filled('q') && $kelasOptions->isNotEmpty()) {
+            $selectedKelas = $kelasOptions->first()->id_kelas;
+        }
+
         $query = Siswa::with('kelas')->whereIn('id_kelas', $kelasIds)->orderBy('nama_siswa');
 
-        if ($request->filled('kelas')) {
-            $kelasId = (int) $request->input('kelas');
+        if ($selectedKelas) {
+            $kelasId = (int) $selectedKelas;
             if ($kelasIds->contains($kelasId)) {
                 $query->where('id_kelas', $kelasId);
             }
@@ -38,9 +44,31 @@ class GuruSiswaController extends Controller
             });
         }
 
+        // When showing all classes (via "Semua Kelas"), group by kelas
+        $showAll = $request->input('kelas') === 'all';
+        $groupedSiswas = null;
+
+        if ($showAll) {
+            $query = Siswa::with('kelas')->whereIn('id_kelas', $kelasIds)->orderBy('nama_siswa');
+            if ($request->filled('q')) {
+                $q = $request->string('q');
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('nama_siswa', 'like', "%{$q}%")
+                        ->orWhere('nipd', 'like', "%{$q}%")
+                        ->orWhere('nisn', 'like', "%{$q}%");
+                });
+            }
+            $selectedKelas = 'all';
+
+            $allSiswas = $query->get();
+            $groupedSiswas = $allSiswas->groupBy(fn ($s) => $s->kelas?->nama_kelas ?? 'Tanpa Kelas');
+        }
+
         return view('guru.siswa.index', [
-            'siswas' => $query->paginate(10)->appends($request->only(['q', 'kelas'])),
+            'siswas' => $groupedSiswas ? null : $query->paginate(15)->appends($request->only(['q', 'kelas'])),
+            'groupedSiswas' => $groupedSiswas,
             'kelasOptions' => $kelasOptions,
+            'selectedKelas' => $selectedKelas,
         ]);
     }
 

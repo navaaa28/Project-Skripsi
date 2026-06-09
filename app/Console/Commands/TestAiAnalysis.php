@@ -89,6 +89,10 @@ class TestAiAnalysis extends Command
         $this->line("  " . wordwrap($result['saran_pengembangan'] ?? '-', 90, "\n  "));
 
         $this->newLine();
+        $this->line('<fg=green>📝 TIPS PENINGKATAN:</>');
+        $this->line("  " . wordwrap($result['tips_peningkatan'] ?? '-', 90, "\n  "));
+
+        $this->newLine();
         $this->line('<fg=yellow>═════════════════════════════════════════</>');
 
         return 0;
@@ -106,7 +110,10 @@ class TestAiAnalysis extends Command
             $mapel = [];
             foreach ($rows as $row) {
                 if ($row->mapel && $row->nilai_akhir !== null) {
-                    $mapel[$row->mapel->nama_mapel] = $row->nilai_akhir;
+                    $mapel[$row->mapel->nama_mapel] = [
+                        'nilai_akhir' => round($row->nilai_akhir, 1),
+                        'kkm' => $row->mapel->kkm ?? 75,
+                    ];
                 }
             }
             if (!empty($mapel)) {

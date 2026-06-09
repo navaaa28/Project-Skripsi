@@ -28,6 +28,7 @@ class Rekomendasi extends Model
         'analisis_tren',
         'ringkasan_non_akademik',
         'saran_pengembangan',
+        'tips_peningkatan',
         'tgl_analisis',
     ];
 

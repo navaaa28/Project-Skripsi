@@ -9,10 +9,88 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $roleFilter = $request->input('role');
+        $kelasFilter = $request->input('kelas');
+        $q = $request->input('q');
+        $kelasOptions = \App\Models\Kelas::orderBy('nama_kelas')->get();
+
+        // ── Grouped view (role=all): group by role, siswa sub-grouped by kelas ──
+        if ($roleFilter === 'all') {
+            $query = User::with('siswa.kelas')->orderBy('username');
+            if ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('username', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%");
+                });
+            }
+            $groupedUsers = $query->get()->groupBy('role');
+
+            // Sub-group siswa by kelas
+            $siswaByKelas = null;
+            if ($groupedUsers->has('siswa')) {
+                $siswaByKelas = $groupedUsers['siswa']
+                    ->groupBy(fn ($u) => $u->siswa?->kelas?->nama_kelas ?? 'Tanpa Kelas');
+            }
+
+            return view('users.index', [
+                'users' => null,
+                'groupedUsers' => $groupedUsers,
+                'siswaByKelas' => $siswaByKelas,
+                'selectedRole' => 'all',
+                'kelasOptions' => $kelasOptions,
+                'selectedKelas' => null,
+            ]);
+        }
+
+        // ── Siswa role: group by kelas ──
+        if ($roleFilter === 'siswa') {
+            $query = User::with('siswa.kelas')->where('role', 'siswa')->orderBy('username');
+            if ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('username', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%");
+                });
+            }
+            if ($kelasFilter && is_numeric($kelasFilter)) {
+                $query->whereHas('siswa', fn ($s) => $s->where('id_kelas', (int) $kelasFilter));
+            }
+
+            $siswaUsers = $query->get();
+            $siswaByKelas = $siswaUsers->groupBy(fn ($u) => $u->siswa?->kelas?->nama_kelas ?? 'Tanpa Kelas');
+
+            return view('users.index', [
+                'users' => null,
+                'groupedUsers' => null,
+                'siswaByKelas' => $siswaByKelas,
+                'selectedRole' => 'siswa',
+                'kelasOptions' => $kelasOptions,
+                'selectedKelas' => $kelasFilter,
+            ]);
+        }
+
+        // ── Default / admin / guru: flat paginated view ──
+        $query = User::orderBy('username');
+
+        if ($roleFilter && in_array($roleFilter, ['admin', 'guru'])) {
+            $query->where('role', $roleFilter);
+        }
+
+        if ($q) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('username', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
         return view('users.index', [
-            'users' => User::latest()->paginate(10),
+            'users' => $query->paginate(15)->appends($request->only(['role', 'q'])),
+            'groupedUsers' => null,
+            'siswaByKelas' => null,
+            'selectedRole' => $roleFilter,
+            'kelasOptions' => $kelasOptions,
+            'selectedKelas' => null,
         ]);
     }
 

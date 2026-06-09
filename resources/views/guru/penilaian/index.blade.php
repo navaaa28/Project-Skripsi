@@ -102,14 +102,18 @@
 
     <div class="panel">
         <h3>Academic Assessment</h3>
-        <div class="table-wrap" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 11px; color: #1e40af;">
+            <strong>Formula Nilai Akhir:</strong> Ulangan Harian (25%) + Tugas (25%) + UTS (25%) + UAS (25%)
+        </div>
+        <div class="table-wrap" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 680px;">
                 <thead>
                     <tr>
                         <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb;">Mata Pelajaran</th>
-                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 140px;">Nilai Tugas</th>
-                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 140px;">Nilai UTS</th>
-                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 140px;">Nilai UAS</th>
+                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 120px;">Ulangan Harian <span style="color:#2563eb; font-size:10px;">(25%)</span></th>
+                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 120px;">Tugas <span style="color:#2563eb; font-size:10px;">(25%)</span></th>
+                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 120px;">UTS <span style="color:#2563eb; font-size:10px;">(25%)</span></th>
+                        <th style="text-align:left; padding: 8px; border-bottom: 1px solid #e5e7eb; width: 120px;">UAS <span style="color:#2563eb; font-size:10px;">(25%)</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,13 +121,16 @@
                         <tr>
                             <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">{{ $m->nama_mapel }}</td>
                             <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
-                                <input type="number" step="0.01" min="0" max="100" name="nilai_tugas[{{ $m->id_mapel }}]" class="input">
+                                <input type="text" name="nilai_uh[{{ $m->id_mapel }}]" class="input" placeholder="Contoh: 80, 85.5, 90">
                             </td>
                             <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
-                                <input type="number" step="0.01" min="0" max="100" name="nilai_uts[{{ $m->id_mapel }}]" class="input">
+                                <input type="number" step="0.01" min="0" max="100" name="nilai_tugas[{{ $m->id_mapel }}]" class="input" placeholder="0-100">
                             </td>
                             <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
-                                <input type="number" step="0.01" min="0" max="100" name="nilai_uas[{{ $m->id_mapel }}]" class="input">
+                                <input type="number" step="0.01" min="0" max="100" name="nilai_uts[{{ $m->id_mapel }}]" class="input" placeholder="0-100">
+                            </td>
+                            <td style="padding: 8px; border-bottom: 1px solid #f1f5f9;">
+                                <input type="number" step="0.01" min="0" max="100" name="nilai_uas[{{ $m->id_mapel }}]" class="input" placeholder="0-100">
                             </td>
                         </tr>
                     @endforeach
@@ -349,6 +356,61 @@ document.addEventListener('DOMContentLoaded', function () {
     if (kelasSelect && siswaSelect) {
         kelasSelect.addEventListener('change', filterSiswaByKelas);
         filterSiswaByKelas();
+    }
+
+    function fetchAndFillGrades(idUser) {
+        // Bersihkan semua input nilai setiap kali ganti siswa
+        const inputsToClear = form.querySelectorAll('input[name^="nilai_"], input[name="sikap_belajar"], input[name="keaktifan"], input[name="minat_ekstrakurikuler"], textarea[name="catatan_guru"]');
+        inputsToClear.forEach(input => input.value = '');
+
+        if (!idUser) return;
+
+        // Tampilkan indikator loading ringan jika perlu
+        const btnSimpan = document.getElementById('btnSimpan');
+        if (btnSimpan) btnSimpan.textContent = 'Memuat data...';
+
+        fetch(`/guru/penilaian/data-siswa/${idUser}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return;
+
+                // Mengisi nilai akademik
+                const nilai = data.nilai || {};
+                Object.keys(nilai).forEach(mapelId => {
+                    const mapelData = nilai[mapelId];
+                    const inputUh = form.querySelector(`input[name="nilai_uh[${mapelId}]"]`);
+                    const inputTugas = form.querySelector(`input[name="nilai_tugas[${mapelId}]"]`);
+                    const inputUts = form.querySelector(`input[name="nilai_uts[${mapelId}]"]`);
+                    const inputUas = form.querySelector(`input[name="nilai_uas[${mapelId}]"]`);
+
+                    if (inputUh) inputUh.value = mapelData.nilai_uh !== null ? mapelData.nilai_uh : '';
+                    if (inputTugas) inputTugas.value = mapelData.nilai_tugas !== null ? mapelData.nilai_tugas : '';
+                    if (inputUts) inputUts.value = mapelData.nilai_uts !== null ? mapelData.nilai_uts : '';
+                    if (inputUas) inputUas.value = mapelData.nilai_uas !== null ? mapelData.nilai_uas : '';
+                });
+
+                // Mengisi nilai non-akademik
+                const nonAkademik = data.non_akademik || {};
+                const inputSikap = form.querySelector('input[name="sikap_belajar"]');
+                const inputKeaktifan = form.querySelector('input[name="keaktifan"]');
+                const inputMinat = form.querySelector('input[name="minat_ekstrakurikuler"]');
+                const inputCatatan = form.querySelector('textarea[name="catatan_guru"]');
+
+                if (inputSikap) inputSikap.value = nonAkademik.sikap_belajar || '';
+                if (inputKeaktifan) inputKeaktifan.value = nonAkademik.keaktifan || '';
+                if (inputMinat) inputMinat.value = nonAkademik.minat_ekstrakurikuler || '';
+                if (inputCatatan) inputCatatan.value = nonAkademik.catatan_guru || '';
+            })
+            .catch(err => console.error('Gagal mengambil data nilai:', err))
+            .finally(() => {
+                if (btnSimpan) btnSimpan.textContent = 'Simpan';
+            });
+    }
+
+    if (siswaSelect) {
+        siswaSelect.addEventListener('change', function() {
+            fetchAndFillGrades(this.value);
+        });
     }
 
     // Toggle panel Kenaikan Kelas saat semester = 2

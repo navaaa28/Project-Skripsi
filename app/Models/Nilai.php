@@ -19,10 +19,16 @@ class Nilai extends Model
         'id_kelas',
         'id_tahun_ajaran',
         'semester',
+        'nilai_uh',
+        'detail_uh',
         'nilai_tugas',
         'nilai_uts',
         'nilai_uas',
         'nilai_akhir',
+    ];
+
+    protected $casts = [
+        'detail_uh' => 'array',
     ];
 
     public function tahunAjaran()

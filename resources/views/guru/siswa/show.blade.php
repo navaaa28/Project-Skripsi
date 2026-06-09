@@ -133,6 +133,7 @@
                     <th>Semester</th>
                     <th>Mapel</th>
                     <th style="width:80px;">KKM</th>
+                    <th>Rincian UH</th>
                     <th>Nilai Akhir</th>
                 </tr>
             </thead>
@@ -147,6 +148,15 @@
                         <td>{{ $n->mapel?->nama_mapel ?? '-' }}</td>
                         <td style="color:#6b7280;">{{ $kkm }}</td>
                         <td>
+                            @if(!empty($n->detail_uh))
+                                <span style="font-size:11px; color:#6b7280;">{{ implode(', ', $n->detail_uh) }}</span>
+                                <br>
+                                <span style="font-size:10px; font-weight:600; color:#374151;">Rata-rata: {{ round($n->nilai_uh, 1) }}</span>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
                             <span class="nilai-num {{ $belowKkm ? 'nilai-below' : 'nilai-ok' }}">
                                 {{ $n->nilai_akhir !== null ? number_format($n->nilai_akhir, 1) : '-' }}
                             </span>
@@ -157,7 +167,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4">Belum ada nilai.</td>
+                        <td colspan="5">Belum ada nilai.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -259,6 +269,17 @@
                 <div class="catatan-title">Saran Pengembangan</div>
                 <ul class="catatan-list">
                     @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->saran_pengembangan))) as $sentence)
+                        <li>{{ $sentence }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if ($rekomendasi->tips_peningkatan)
+            <div class="catatan-block" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px; margin-top: 14px;">
+                <div class="catatan-title" style="color: #166534;">💡 Tips Peningkatan</div>
+                <ul class="catatan-list">
+                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->tips_peningkatan))) as $sentence)
                         <li>{{ $sentence }}</li>
                     @endforeach
                 </ul>

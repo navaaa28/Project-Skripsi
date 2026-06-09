@@ -19,27 +19,54 @@ class NilaiService
      */
     public function storeNilai(array $data, int $idGuru): void
     {
+        $uh = $data['nilai_uh'] ?? [];
         $tugas = $data['nilai_tugas'] ?? [];
         $uts = $data['nilai_uts'] ?? [];
         $uas = $data['nilai_uas'] ?? [];
 
         $mapelIds = collect(array_merge(
+            array_keys($uh),
             array_keys($tugas),
             array_keys($uts),
             array_keys($uas)
         ))->unique()->filter();
 
+        // Bobot persentase: UH 25%, Tugas 25%, UTS 25%, UAS 25%
+        $weights = [
+            'uh'    => 25,
+            'tugas' => 25,
+            'uts'   => 25,
+            'uas'   => 25,
+        ];
+
         foreach ($mapelIds as $mapelId) {
+            $uhData = $this->parseUhScores($uh[$mapelId] ?? null);
+            $nilaiUh = $uhData['average'];
+            $detailUh = $uhData['details'];
+
             $nilaiTugas = $this->normalizeNilai($tugas[$mapelId] ?? null);
             $nilaiUts = $this->normalizeNilai($uts[$mapelId] ?? null);
             $nilaiUas = $this->normalizeNilai($uas[$mapelId] ?? null);
 
-            if ($nilaiTugas === null && $nilaiUts === null && $nilaiUas === null) {
+            if ($nilaiUh === null && $nilaiTugas === null && $nilaiUts === null && $nilaiUas === null) {
                 continue;
             }
 
-            $nilaiParts = array_filter([$nilaiTugas, $nilaiUts, $nilaiUas], fn ($v) => $v !== null);
-            $nilaiAkhir = count($nilaiParts) ? array_sum($nilaiParts) / count($nilaiParts) : null;
+            $components = [
+                'uh'    => $nilaiUh,
+                'tugas' => $nilaiTugas,
+                'uts'   => $nilaiUts,
+                'uas'   => $nilaiUas,
+            ];
+            $totalWeight = 0;
+            $weightedSum = 0;
+            foreach ($components as $key => $value) {
+                if ($value !== null) {
+                    $totalWeight += $weights[$key];
+                    $weightedSum += $value * $weights[$key];
+                }
+            }
+            $nilaiAkhir = $totalWeight > 0 ? $weightedSum / $totalWeight : null;
 
             Nilai::updateOrCreate(
                 [
@@ -50,6 +77,8 @@ class NilaiService
                     'semester' => $data['semester'],
                 ],
                 [
+                    'nilai_uh' => $nilaiUh,
+                    'detail_uh' => $detailUh,
                     'nilai_tugas' => $nilaiTugas,
                     'nilai_uts' => $nilaiUts,
                     'nilai_uas' => $nilaiUas,
@@ -102,6 +131,33 @@ class NilaiService
         }
 
         return $query->get();
+    }
+
+    private function parseUhScores(mixed $value): array
+    {
+        if ($value === null || trim((string)$value) === '') {
+            return ['average' => null, 'details' => null];
+        }
+
+        $parts = explode(',', (string)$value);
+        $validScores = [];
+        
+        foreach ($parts as $p) {
+            $num = $this->normalizeNilai(trim($p));
+            if ($num !== null) {
+                $validScores[] = $num;
+            }
+        }
+
+        if (count($validScores) === 0) {
+            return ['average' => null, 'details' => null];
+        }
+
+        $average = array_sum($validScores) / count($validScores);
+        return [
+            'average' => $average,
+            'details' => $validScores
+        ];
     }
 
     private function normalizeNilai(mixed $value): ?float

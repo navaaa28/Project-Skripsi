@@ -40,6 +40,7 @@
         <thead>
             <tr>
                 <th>Mapel</th>
+                <th>UH</th>
                 <th>Tugas</th>
                 <th>UTS</th>
                 <th>UAS</th>
@@ -50,6 +51,7 @@
             @forelse($nilai as $n)
                 <tr>
                     <td>{{ $n->mapel->nama_mapel ?? '-' }}</td>
+                    <td>{{ $n->nilai_uh !== null ? round($n->nilai_uh, 1) . (!empty($n->detail_uh) ? ' (' . implode(',', $n->detail_uh) . ')' : '') : '-' }}</td>
                     <td>{{ $n->nilai_tugas ?? '-' }}</td>
                     <td>{{ $n->nilai_uts ?? '-' }}</td>
                     <td>{{ $n->nilai_uas ?? '-' }}</td>
@@ -57,7 +59,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5">Belum ada nilai.</td>
+                    <td colspan="6">Belum ada nilai.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -74,5 +76,8 @@
 
     <h2>Saran Pengembangan</h2>
     <div>{{ $rekomendasi->saran_pengembangan ?? '-' }}</div>
+
+    <h2>Tips Peningkatan</h2>
+    <div>{{ $rekomendasi->tips_peningkatan ?? '-' }}</div>
 </body>
 </html>

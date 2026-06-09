@@ -17,14 +17,27 @@ class SiswaController extends Controller
     ) {}
     public function index(Request $request)
     {
-        $siswas = $this->siswaService->list(
-            $request->only(['kelas', 'q']),
-            10
-        )->appends($request->only(['kelas', 'q']));
+        $kelasOptions = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        $showAll = $request->input('kelas') === 'all';
+        $groupedSiswas = null;
+
+        if ($showAll && !$request->filled('q')) {
+            $allSiswas = Siswa::with('kelas')->orderBy('nama_siswa')->get();
+            $groupedSiswas = $allSiswas->groupBy(fn ($s) => $s->kelas?->nama_kelas ?? 'Tanpa Kelas');
+        }
+
+        $siswas = null;
+        if (!$groupedSiswas) {
+            $siswas = $this->siswaService->list(
+                $request->only(['kelas', 'q']),
+                10
+            )->appends($request->only(['kelas', 'q']));
+        }
 
         return view('siswa.index', [
             'siswas' => $siswas,
-            'kelasOptions' => \App\Models\Kelas::orderBy('nama_kelas')->get(),
+            'groupedSiswas' => $groupedSiswas,
+            'kelasOptions' => $kelasOptions,
         ]);
     }
 
