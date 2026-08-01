@@ -147,6 +147,12 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        if ($user->role === 'siswa') {
+            \App\Models\Siswa::where('id_user', $user->id_user)->forceDelete();
+        } elseif ($user->role === 'guru') {
+            \App\Models\Guru::where('id_user', $user->id_user)->forceDelete();
+        }
+
         $user->delete();
 
         return redirect()->route('admin.users.index');

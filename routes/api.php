@@ -22,5 +22,6 @@ Route::prefix('mobile')->group(function () {
             Route::post('/dokumen', [MobileDokumenController::class , 'store']);
             Route::put('/dokumen/{id}', [MobileDokumenController::class , 'update']);
             Route::delete('/dokumen/{id}', [MobileDokumenController::class , 'destroy']);
-        }
-        );    });
+            Route::get('/dokumen/{id}/download', [MobileDokumenController::class , 'download']);
+        });
+    });

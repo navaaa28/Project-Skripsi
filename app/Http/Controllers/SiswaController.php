@@ -45,6 +45,7 @@ class SiswaController extends Controller
     {
         return view('siswa.create', [
             'users' => User::where('role', 'siswa')->orderBy('username')->get(),
+            'kelasOptions' => \App\Models\Kelas::orderBy('nama_kelas')->get(),
         ]);
     }
 
@@ -66,7 +67,6 @@ class SiswaController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'id_user' => ['required', 'exists:users,id_user', 'unique:siswas,id_user'],
             'nipd' => ['nullable', 'string', 'max:20', 'unique:siswas,nipd'],
             'nisn' => ['nullable', 'string', 'max:20', 'unique:siswas,nisn'],
             'nama_siswa' => ['required', 'string', 'max:100'],
@@ -76,14 +76,50 @@ class SiswaController extends Controller
             'rombel_saat_ini' => ['nullable', 'string', 'max:50'],
             'id_kelas' => ['nullable', 'exists:kelas,id_kelas'],
         ], [
-            'id_user.unique' => 'User siswa sudah terdaftar.',
             'nipd.unique' => 'NIPD sudah terdaftar, tidak boleh duplikat.',
             'nisn.unique' => 'NISN sudah terdaftar, tidak boleh duplikat.',
         ]);
 
-        $this->siswaService->create($data);
+        $username = $this->generateUsername($data['nama_siswa']);
+        
+        $passwordString = 'siswa12345';
+        if (!empty($data['tgl_lahir'])) {
+            $passwordString = \Carbon\Carbon::parse($data['tgl_lahir'])->format('dmY');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($username, $passwordString, $data) {
+            $user = User::create([
+                'username' => $username,
+                'email' => null,
+                'password' => \Illuminate\Support\Facades\Hash::make($passwordString),
+                'role' => 'siswa',
+            ]);
+            
+            $data['id_user'] = $user->id_user;
+            $this->siswaService->create($data);
+        });
 
         return redirect()->route('admin.siswa.index');
+    }
+
+    private function generateUsername(string $nama): string
+    {
+        $first = trim(strtok($nama, ' '));
+        $base = \Illuminate\Support\Str::slug($first, '_');
+        if ($base === '') {
+            $base = 'siswa';
+        }
+        $base = \Illuminate\Support\Str::limit($base, 20, '');
+        $username = $base . '_cicadas';
+        $counter = 1;
+
+        while (User::where('username', $username)->exists()) {
+            $counter++;
+            $suffix = '_' . $counter;
+            $username = \Illuminate\Support\Str::limit($base, 40 - strlen($suffix), '') . '_cicadas' . $suffix;
+        }
+
+        return $username;
     }
 
     public function show(Siswa $siswa)

@@ -177,9 +177,9 @@
 
     {{-- Panel Kenaikan Kelas (hanya muncul saat semester 2) --}}
     <div class="panel" id="panelKenaikan" style="display: none; border: 2px solid #fbbf24;">
-        <h3 style="color: #92400e;">📋 Keputusan Kenaikan Kelas</h3>
+        <h3 style="color: #92400e;">📋 Keputusan Kenaikan Kelas <span style="font-size: 11px; font-weight: 400; color: #b45309;">(Opsional)</span></h3>
         <div style="background: #fef3c7; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #92400e; margin-bottom: 12px;">
-            Semester 2 (Genap) = akhir tahun ajaran. Tentukan apakah siswa ini <strong>naik kelas</strong> atau <strong>tidak naik</strong>.
+            Semester 2 (Genap) = akhir tahun ajaran. Anda <strong>dapat</strong> menentukan keputusan kenaikan kelas di sini, atau mengisinya nanti setelah semua nilai lengkap.
         </div>
         <div class="grid">
             <div class="field">
@@ -422,9 +422,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!semesterInput || !panelKenaikan) return;
         const isSem2 = semesterInput.value === '2';
         panelKenaikan.style.display = isSem2 ? 'block' : 'none';
-        if (keputusanSelect) {
-            keputusanSelect.required = isSem2;
-        }
     }
 
     toggleKenaikanPanel();

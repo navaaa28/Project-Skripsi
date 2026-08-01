@@ -181,7 +181,12 @@
     </div>
 @endforeach
 
-@if ($hasDecisions)
+@if ($tahunAjaranProses && $tahunAjaranProses->semester_aktif == 1)
+    <div class="warning-card">
+        <strong>Saat ini masih Semester Ganjil.</strong><br>
+        Proses Kenaikan Kelas hanya dapat dilakukan pada akhir Tahun Ajaran (Semester Genap).
+    </div>
+@elseif ($hasDecisions)
     <div class="confirm-section">
         <form method="POST" action="{{ route('admin.kenaikan-kelas.process') }}">
             @csrf

@@ -90,6 +90,10 @@ class KenaikanKelasController extends Controller
             return back()->with('error', 'Tidak ada data kenaikan kelas yang bisa diproses.');
         }
 
+        if ($tahunAjaranProses->semester_aktif == 1) {
+            return back()->with('error', 'Proses kenaikan kelas hanya bisa dilakukan pada semester genap.');
+        }
+
         $decisions = KenaikanKelas::where('id_tahun_ajaran', $tahunAjaranProses->id_tahun_ajaran)
             ->where('is_processed', false)
             ->get();

@@ -17,15 +17,7 @@
 <div class="card">
     <form method="POST" action="{{ route('admin.siswa.store') }}">
         @csrf
-        <div class="field">
-            <label class="label">User (role siswa)</label>
-            <select name="id_user" class="select" required>
-                <option value="">-</option>
-                @foreach ($users as $user)
-                    <option value="{{ $user->id_user }}">{{ $user->username }} ({{ $user->email ?? '-' }})</option>
-                @endforeach
-            </select>
-        </div>
+
         <div class="field">
             <label class="label">Nama Siswa</label>
             <input name="nama_siswa" class="input" required>
@@ -40,7 +32,16 @@
         </div>
         <div class="field">
             <label class="label">Jenis Kelamin (L/P)</label>
-            <input name="jenis_kelamin" class="input">
+            <div style="display: flex; gap: 18px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
+                    <input type="radio" name="jenis_kelamin" value="L" @checked(old('jenis_kelamin') === 'L')>
+                    L
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
+                    <input type="radio" name="jenis_kelamin" value="P" @checked(old('jenis_kelamin') === 'P')>
+                    P
+                </label>
+            </div>
         </div>
         <div class="field">
             <label class="label">Tempat Lahir</label>
@@ -56,7 +57,12 @@
         </div>
         <div class="field">
             <label class="label">Kelas (opsional)</label>
-            <input name="id_kelas" type="number" class="input" placeholder="ID kelas">
+            <select name="id_kelas" class="select">
+                <option value="">- Pilih Kelas -</option>
+                @foreach ($kelasOptions as $kelas)
+                    <option value="{{ $kelas->id_kelas }}" @selected(old('id_kelas') == $kelas->id_kelas)>{{ $kelas->nama_kelas }}</option>
+                @endforeach
+            </select>
         </div>
         <button class="btn" type="submit">Simpan</button>
         <a href="{{ route('admin.siswa.index') }}" class="btn btn-secondary">Kembali</a>

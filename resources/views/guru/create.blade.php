@@ -19,15 +19,7 @@
 <div class="card">
     <form method="POST" action="{{ route('admin.guru.store') }}">
         @csrf
-        <div class="field">
-            <label class="label">User (role guru)</label>
-            <select name="id_user" class="select" required>
-                <option value="">-</option>
-                @foreach ($users as $user)
-                    <option value="{{ $user->id_user }}" @selected(old('id_user') == $user->id_user)>{{ $user->username }} ({{ $user->email ?? '-' }})</option>
-                @endforeach
-            </select>
-        </div>
+
         <div class="field">
             <label class="label">NIP</label>
             <input name="nip" value="{{ old('nip') }}" class="input">

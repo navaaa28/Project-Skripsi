@@ -117,4 +117,19 @@ class MobileDokumenController extends Controller
 
         return response()->json(['message' => 'Dokumen berhasil dihapus.']);
     }
+
+    /**
+     * Download dokumen.
+     */
+    public function download(Request $request, $id)
+    {
+        $user = $request->user();
+        $dokumen = DokumenSiswa::where('id_user', $user->id_user)->findOrFail($id);
+
+        if (!Storage::disk('public')->exists($dokumen->path)) {
+            return response()->json(['message' => 'File tidak ditemukan di server.'], 404);
+        }
+
+        return Storage::disk('public')->download($dokumen->path, $dokumen->nama_file);
+    }
 }

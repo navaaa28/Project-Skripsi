@@ -74,6 +74,10 @@ class GuruKenaikanKelasController extends Controller
             return back()->with('error', 'Tidak ada tahun ajaran aktif.');
         }
 
+        if ($tahunAjaranAktif->semester_aktif == 1) {
+            return back()->with('error', 'Kenaikan kelas hanya bisa dilakukan pada semester genap.');
+        }
+
         $request->validate([
             'keputusan' => ['required', 'array'],
             'keputusan.*' => ['required', 'in:naik,tidak_naik'],

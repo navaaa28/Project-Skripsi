@@ -45,19 +45,49 @@ class GuruController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'id_user' => ['required', 'exists:users,id_user', 'unique:gurus,id_user'],
             'nip' => ['nullable', 'string', 'max:30', 'unique:gurus,nip'],
             'nama_guru' => ['required', 'string', 'max:100'],
             'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
             'mapel_utama' => ['nullable', 'string', 'max:50'],
         ], [
-            'id_user.unique' => 'User guru sudah terdaftar.',
             'nip.unique' => 'NIP sudah terdaftar, gunakan NIP lain.',
         ]);
 
-        Guru::create($data);
+        $username = $this->generateUsername($data['nama_guru']);
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($username, $data) {
+            $user = User::create([
+                'username' => $username,
+                'email' => null,
+                'password' => \Illuminate\Support\Facades\Hash::make('guru12345'),
+                'role' => 'guru',
+            ]);
+            
+            $data['id_user'] = $user->id_user;
+            Guru::create($data);
+        });
 
         return redirect()->route('admin.guru.index');
+    }
+
+    private function generateUsername(string $nama): string
+    {
+        $first = trim(strtok($nama, ' '));
+        $base = \Illuminate\Support\Str::slug($first, '_');
+        if ($base === '') {
+            $base = 'guru';
+        }
+        $base = \Illuminate\Support\Str::limit($base, 20, '');
+        $username = $base . '_cicadas';
+        $counter = 1;
+
+        while (User::where('username', $username)->exists()) {
+            $counter++;
+            $suffix = '_' . $counter;
+            $username = \Illuminate\Support\Str::limit($base, 20 - strlen($suffix), '') . '_cicadas' . $suffix;
+        }
+
+        return $username;
     }
 
     public function show(Guru $guru)

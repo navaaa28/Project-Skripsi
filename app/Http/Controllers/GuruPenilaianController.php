@@ -67,7 +67,7 @@ class GuruPenilaianController extends Controller
             'keaktifan' => ['nullable', 'integer', 'min:1', 'max:5'],
             'minat_ekstrakurikuler' => ['nullable', 'string', 'max:100'],
             'catatan_guru' => ['nullable', 'string'],
-            'keputusan_kenaikan' => ['required_if:semester,2', 'nullable', 'in:naik,tidak_naik'],
+            'keputusan_kenaikan' => ['nullable', 'in:naik,tidak_naik'],
             'catatan_kenaikan' => ['nullable', 'string', 'max:500'],
         ]);
 

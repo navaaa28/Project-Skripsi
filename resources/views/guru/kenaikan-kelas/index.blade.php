@@ -91,6 +91,11 @@
         <strong>Belum ada Tahun Ajaran aktif.</strong><br>
         Hubungi admin untuk mengaktifkan Tahun Ajaran.
     </div>
+@elseif ($tahunAjaranAktif->semester_aktif == 1)
+    <div class="warn-box">
+        <strong>Saat ini masih Semester Ganjil.</strong><br>
+        Proses Kenaikan Kelas hanya dapat dilakukan pada akhir Tahun Ajaran (Semester Genap).
+    </div>
 @else
     <div class="info-box">
         <strong>Tahun Ajaran:</strong> {{ $tahunAjaranAktif->nama_tahun_ajaran }} &nbsp;|&nbsp;
