@@ -46,6 +46,26 @@
         margin-right: 6px;
         font-size: 12px;
     }
+    .chip-minat {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+    .chip-bakat {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
 </style>
 
 <div class="panel">
@@ -87,9 +107,9 @@
                         </td>
                         <td>{{ $item->siswa?->kelas?->nama_kelas ?? '-' }}</td>
                         <td>{{ $item->semester }}</td>
-                        <td>{{ $item->minat_utama ?? '-' }}</td>
-                        <td>{{ $item->bakat_potensial ?? '-' }}</td>
-                        <td>{{ $item->tgl_analisis ?? '-' }}</td>
+                        <td>{!! $item->minat_utama ? '<span class="chip-minat">' . e($item->minat_utama) . '</span>' : '<span class="muted">-</span>' !!}</td>
+                        <td>{!! $item->bakat_potensial ? '<span class="chip-bakat">' . e($item->bakat_potensial) . '</span>' : '<span class="muted">-</span>' !!}</td>
+                        <td>{{ $item->tgl_analisis ? \Carbon\Carbon::parse($item->tgl_analisis)->translatedFormat('d M Y') : '-' }}</td>
                         <td>
                             @if ($item->siswa)
                                 <a class="btn" href="{{ route('guru.siswa.show', $item->siswa) }}">Lihat Detail</a>

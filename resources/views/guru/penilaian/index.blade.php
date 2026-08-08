@@ -145,28 +145,40 @@
             <div class="field">
                 <label class="label">Sikap Belajar</label>
                 <select name="sikap_belajar" class="select">
-                    <option value="">Pilih Skala</option>
-                    <option value="5">Sangat Baik</option>
-                    <option value="4">Baik</option>
-                    <option value="3">Cukup</option>
-                    <option value="2">Kurang</option>
-                    <option value="1">Buruk</option>
+                    <option value="">Pilih Evaluasi Sikap</option>
+                    <option value="Sangat tekun, teliti, dan pantang menyerah">Sangat tekun & teliti</option>
+                    <option value="Memiliki rasa ingin tahu tinggi dan kritis">Rasa ingin tahu tinggi & kritis</option>
+                    <option value="Sangat antusias dan selalu fokus dalam belajar">Sangat antusias & selalu fokus</option>
+                    <option value="Mandiri, disiplin, dan tertib di kelas">Mandiri, disiplin & tertib</option>
+                    <option value="Fokus dan bertanggung jawab menyelesaikan tugas">Fokus & bertanggung jawab</option>
+                    <option value="Cukup baik namun perlu dorongan ekstra">Cukup baik (perlu dorongan)</option>
+                    <option value="Kurang teliti dan sering terburu-buru">Kurang teliti & terburu-buru</option>
+                    <option value="Mudah terdistraksi dan kurang konsentrasi">Mudah terdistraksi</option>
+                    <option value="Sering pasif, kurang disiplin, dan menunda tugas">Pasif & kurang disiplin</option>
                 </select>
             </div>
             <div class="field">
                 <label class="label">Keaktifan</label>
                 <select name="keaktifan" class="select">
-                    <option value="">Pilih Skala</option>
-                    <option value="5">Sangat Aktif</option>
-                    <option value="4">Aktif</option>
-                    <option value="3">Cukup</option>
-                    <option value="2">Kurang</option>
-                    <option value="1">Pasif</option>
+                    <option value="">Pilih Tingkat Keaktifan</option>
+                    <option value="Sangat Aktif berdiskusi dan bertanya">Sangat Aktif (berdiskusi & bertanya)</option>
+                    <option value="Aktif berpartisipasi dalam kelas">Aktif berpartisipasi</option>
+                    <option value="Cukup aktif saat diminta merespon">Cukup aktif (saat diminta)</option>
+                    <option value="Cenderung diam dan mendengarkan">Cenderung diam</option>
+                    <option value="Sangat pasif di dalam kelas">Sangat pasif</option>
                 </select>
             </div>
             <div class="field">
                 <label class="label">Minat Ekstrakurikuler</label>
-                <input type="text" name="minat_ekstrakurikuler" class="input" placeholder="Contoh: Pramuka, Pencak Silat">
+                <select name="minat_ekstrakurikuler" class="select">
+                    <option value="">-- Pilih Ekstrakurikuler --</option>
+                    <option value="Badminton">Badminton</option>
+                    <option value="Futsal">Futsal</option>
+                    <option value="Pramuka">Pramuka</option>
+                    <option value="Pencak Silat">Pencak Silat</option>
+                    <option value="Voli">Voli</option>
+                    <option value="Tidak Mengikuti">Tidak Mengikuti</option>
+                </select>
             </div>
             <div class="field" style="grid-column: 1 / -1;">
                 <label class="label">Catatan Guru</label>

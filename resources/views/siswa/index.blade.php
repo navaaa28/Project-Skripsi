@@ -186,10 +186,13 @@
     <div class="admin-index-card">
         <form method="POST" action="{{ route('admin.siswa.import') }}" enctype="multipart/form-data" class="admin-import-form">
             @csrf
-            <input type="file" name="file" accept=".xlsx,.xls" required>
+            <input type="file" name="file" accept=".xlsx,.xls,.csv" required style="font-size: 13px;">
             <button type="submit" class="admin-btn-outline">Import XLSX</button>
-            <span class="admin-hint">Header: Nama, NIPD, JK, NISN, Tempat Lahir, Tanggal Lahir, Rombel Saat Ini</span>
+            <a href="{{ asset('templates/template_import_siswa.xlsx') }}" download class="admin-btn-outline" style="background:#f1f5f9; color:#475569; text-decoration:none; display:inline-block; margin-left: 10px;">Download Template</a>
         </form>
+        <div style="margin-top: 8px;">
+            <span class="admin-hint">Header: Nama, NIPD, JK, NISN, Tempat Lahir, Tanggal Lahir, Rombel Saat Ini</span>
+        </div>
         @if (session('import_errors'))
             <div class="admin-error-list">
                 @foreach (session('import_errors') as $msg)

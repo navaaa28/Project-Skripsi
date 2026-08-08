@@ -233,7 +233,7 @@ class GeminiService
         $fallback = strtolower((string) config('ai.fallback_provider', 'groq'));
 
         return collect([$primary, $fallback])
-            ->filter(fn ($provider) => in_array($provider, ['gemini', 'groq'], true))
+            ->filter(fn($provider) => in_array($provider, ['gemini', 'groq'], true))
             ->unique()
             ->values()
             ->all();

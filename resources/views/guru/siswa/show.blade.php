@@ -7,7 +7,7 @@
     .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
     .breadcrumb { font-size: 12px; color: #6b7280; margin-bottom: 10px; }
     .student-box { display: flex; align-items: center; gap: 12px; }
-    .avatar { width: 56px; height: 56px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; }
+    .avatar { width: 56px; height: 56px; border: none; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; letter-spacing: 0.5px; }
     .tabs { display: flex; gap: 12px; border-bottom: 1px solid #e5e7eb; margin: 8px 0 12px; }
     .tab { background: none; border: none; padding: 8px 0; font-size: 12px; color: #6b7280; border-bottom: 2px solid transparent; cursor: pointer; }
     .tab.active { color: #2563eb; border-color: #2563eb; font-weight: 600; }
@@ -68,7 +68,11 @@
 
 <div class="panel">
     <div class="student-box">
-        <div class="avatar">X</div>
+        @php
+            $nameParts = explode(' ', trim($siswa->nama_siswa));
+            $initials = strtoupper(substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? substr($nameParts[1], 0, 1) : ''));
+        @endphp
+        <div class="avatar">{{ $initials }}</div>
         <div>
             <div style="font-weight:700;">{{ $siswa->nama_siswa }}</div>
             <div class="breadcrumb">NIPD: {{ $siswa->nipd ?? '-' }}</div>
@@ -195,18 +199,25 @@
 </div>
 
 <div class="panel">
-    <div class="section-title" style="margin-bottom: 4px;">Hasil Analisis Minat & Bakat</div>
+    <div class="section-title" style="margin-bottom: 4px;">🧠 Hasil Analisis Minat & Bakat</div>
     @if (!$rekomendasi)
         <div class="muted">Belum ada hasil analisis. Isi semua nilai mata pelajaran terlebih dahulu.</div>
     @else
-        <div class="muted" style="margin-bottom: 14px;">Semester {{ $rekomendasi->semester }} · {{ $rekomendasi->tgl_analisis }}</div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+            <span class="muted">Semester {{ $rekomendasi->semester }} · {{ $rekomendasi->tgl_analisis }}</span>
+            @if ($rekomendasi->confidence_score)
+                <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600;
+                    {{ $rekomendasi->confidence_score >= 70 ? 'background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;' : ($rekomendasi->confidence_score >= 40 ? 'background:#fffbeb; color:#d97706; border:1px solid #fde68a;' : 'background:#fef2f2; color:#dc2626; border:1px solid #fecaca;') }}"
+                >Confidence: {{ round($rekomendasi->confidence_score) }}%</span>
+            @endif
+        </div>
 
         <div class="hasil-grid">
             {{-- Minat --}}
-            <div class="hasil-box">
-                <div class="hasil-label">Minat</div>
+            <div class="hasil-box" style="background:#eff6ff; border:1px solid #bfdbfe;">
+                <div class="hasil-label">🎯 Minat</div>
                 @if ($rekomendasi->minat_utama)
-                    <div class="hasil-value">{{ $rekomendasi->minat_utama }}</div>
+                    <div class="hasil-value" style="color:#1d4ed8;">{{ $rekomendasi->minat_utama }}</div>
                 @endif
                 @if (!empty($rekomendasi->minat_json))
                     <div class="bar-list">
@@ -222,10 +233,10 @@
             </div>
 
             {{-- Bakat --}}
-            <div class="hasil-box">
-                <div class="hasil-label">Bakat</div>
+            <div class="hasil-box" style="background:#ecfdf5; border:1px solid #a7f3d0;">
+                <div class="hasil-label">⭐ Bakat</div>
                 @if ($rekomendasi->bakat_potensial)
-                    <div class="hasil-value">{{ $rekomendasi->bakat_potensial }}</div>
+                    <div class="hasil-value" style="color:#059669;">{{ $rekomendasi->bakat_potensial }}</div>
                 @endif
                 @if (!empty($rekomendasi->bakat_json))
                     <div class="bar-list">
@@ -241,48 +252,72 @@
             </div>
         </div>
 
-        {{-- Text sections --}}
+        {{-- Text sections as colored cards: intro paragraph + bullet points --}}
         @if ($rekomendasi->analisis_tren)
-            <div class="catatan-block">
-                <div class="catatan-title">Analisis Tren</div>
-                <ul class="catatan-list">
-                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->analisis_tren))) as $sentence)
-                        <li>{{ $sentence }}</li>
-                    @endforeach
-                </ul>
+            @php $sentences = array_values(array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->analisis_tren)))); @endphp
+            <div class="ai-card ai-card-blue">
+                <div class="ai-card-title">📊 Analisis Tren</div>
+                @if (!empty($sentences[0]))
+                    <p class="ai-card-intro">{{ $sentences[0] }}</p>
+                @endif
+                @if (count($sentences) > 1)
+                    <ul class="ai-card-list">
+                        @foreach (array_slice($sentences, 1) as $sentence)
+                            <li>{{ $sentence }}</li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         @endif
 
         @if ($rekomendasi->ringkasan_non_akademik)
-            <div class="catatan-block">
-                <div class="catatan-title">Ringkasan Non-Akademik</div>
-                <ul class="catatan-list">
-                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->ringkasan_non_akademik))) as $sentence)
-                        <li>{{ $sentence }}</li>
-                    @endforeach
-                </ul>
+            @php $sentences = array_values(array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->ringkasan_non_akademik)))); @endphp
+            <div class="ai-card ai-card-purple">
+                <div class="ai-card-title">👤 Ringkasan Non-Akademik</div>
+                @if (!empty($sentences[0]))
+                    <p class="ai-card-intro">{{ $sentences[0] }}</p>
+                @endif
+                @if (count($sentences) > 1)
+                    <ul class="ai-card-list">
+                        @foreach (array_slice($sentences, 1) as $sentence)
+                            <li>{{ $sentence }}</li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         @endif
 
         @if ($rekomendasi->saran_pengembangan)
-            <div class="catatan-block">
-                <div class="catatan-title">Saran Pengembangan</div>
-                <ul class="catatan-list">
-                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->saran_pengembangan))) as $sentence)
-                        <li>{{ $sentence }}</li>
-                    @endforeach
-                </ul>
+            @php $sentences = array_values(array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->saran_pengembangan)))); @endphp
+            <div class="ai-card ai-card-green">
+                <div class="ai-card-title">🚀 Saran Pengembangan</div>
+                @if (!empty($sentences[0]))
+                    <p class="ai-card-intro">{{ $sentences[0] }}</p>
+                @endif
+                @if (count($sentences) > 1)
+                    <ul class="ai-card-list">
+                        @foreach (array_slice($sentences, 1) as $sentence)
+                            <li>{{ $sentence }}</li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         @endif
 
         @if ($rekomendasi->tips_peningkatan)
-            <div class="catatan-block" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px; margin-top: 14px;">
-                <div class="catatan-title" style="color: #166534;">💡 Tips Peningkatan</div>
-                <ul class="catatan-list">
-                    @foreach (array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->tips_peningkatan))) as $sentence)
-                        <li>{{ $sentence }}</li>
-                    @endforeach
-                </ul>
+            @php $sentences = array_values(array_filter(array_map('trim', preg_split('/(?<=\.)\s+/', $rekomendasi->tips_peningkatan)))); @endphp
+            <div class="ai-card ai-card-amber">
+                <div class="ai-card-title">💡 Tips Peningkatan</div>
+                @if (!empty($sentences[0]))
+                    <p class="ai-card-intro">{{ $sentences[0] }}</p>
+                @endif
+                @if (count($sentences) > 1)
+                    <ul class="ai-card-list">
+                        @foreach (array_slice($sentences, 1) as $sentence)
+                            <li>{{ $sentence }}</li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         @endif
     @endif
@@ -311,26 +346,42 @@
 
     /* ---- Hasil Analisis ---- */
     .hasil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .hasil-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; background: #fafafa; }
-    .hasil-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
-    .hasil-value { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+    .hasil-box { border-radius: 10px; padding: 16px; }
+    .hasil-label { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 6px; }
+    .hasil-value { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
 
     .bar-list { display: flex; flex-direction: column; gap: 8px; }
     .bar-row { display: flex; align-items: center; gap: 8px; }
     .bar-name { font-size: 11px; color: #475569; width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bar-track { flex: 1; height: 6px; border-radius: 3px; background: #e5e7eb; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 3px; }
-    .bar-blue { background: #3b82f6; }
-    .bar-teal { background: #14b8a6; }
+    .bar-track { flex: 1; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.7); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+    .bar-blue { background: #2563eb; }
+    .bar-teal { background: #059669; }
     .bar-num { font-size: 11px; font-weight: 600; color: #374151; width: 32px; text-align: right; flex-shrink: 0; }
 
-    .catatan-block { border-top: 1px solid #f0f0f0; padding-top: 12px; margin-top: 12px; }
-    .catatan-title { font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
-    .catatan-list {
-        list-style: disc; margin: 0; padding-left: 18px;
-        display: flex; flex-direction: column; gap: 4px;
+    /* ---- AI Text Cards ---- */
+    .ai-card {
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-top: 12px;
+        border-left: 4px solid;
     }
-    .catatan-list li { font-size: 12px; color: #475569; line-height: 1.55; }
+    .ai-card-blue   { background: #eff6ff; border-left-color: #3b82f6; }
+    .ai-card-purple { background: #f5f3ff; border-left-color: #8b5cf6; }
+    .ai-card-green  { background: #f0fdf4; border-left-color: #22c55e; }
+    .ai-card-amber  { background: #fffbeb; border-left-color: #f59e0b; }
+    .ai-card-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+    .ai-card-intro { font-size: 12px; color: #334155; line-height: 1.6; margin: 0 0 8px; font-weight: 500; }
+    .ai-card-list {
+        list-style: disc;
+        margin: 0;
+        padding-left: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .ai-card-list li { font-size: 12px; color: #475569; line-height: 1.6; }
+
     .chart-toolbar {
         display: flex;
         flex-wrap: wrap;
